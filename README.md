@@ -5,16 +5,21 @@ MicroBase es una plataforma SaaS (Software as a Service) modular y dinámica, di
 ## 🌟 Características Principales
 
 *   **Creador de Recursos Dinámicos (No-Code):** Permite a los administradores crear sus propias tablas y columnas personalizadas (ej. Inventario, Clientes, Proveedores, Horarios) sin escribir una sola línea de código.
-*   **Módulo POS (Point of Sale) Inteligente:** Panel que detecta el tipo de operación. Separa automáticamente el flujo de **Ventas (Clientes)** y **Compras (Proveedores)**, gestionando el stock de forma integral.
-*   **Facturación y Tickets Térmicos:** Generación automática de tickets en formato de rollo térmico (58mm) al procesar movimientos, con posibilidad de re-impresión desde el historial.
-*   **Acceso Basado en Roles (RBAC):** Blindaje de seguridad estricto con jerarquías estándar de la industria mediante bloqueo de Backend y Frontend:
+*   **Módulo POS (Point of Sale) Inteligente con Cédula/RUC**: 
+    *   Detección de tipo de operación y control de stock de Ventas y Compras.
+    *   **Identificación y Búsqueda Avanzada**: Búsqueda flexible de clientes por Nombre o por Cédula/RUC.
+    *   **Auto-llenado Cruzado**: Autocompleta automáticamente la cédula cuando se selecciona un nombre y viceversa.
+    *   **Enforzamiento Físico de Dígitos**: Control estricto a nivel de teclado que restringe la entrada a exactamente 10 dígitos (Cédula) o 13 dígitos (RUC), mostrando advertencias en tiempo real tanto en el POS como en el registro de empleados.
+    *   **Consumidor Final Fast-Checkout**: Checkbox integrado que bloquea y autocompleta instantáneamente la venta con "Consumidor Final" y el RUC genérico `9999999999`.
+*   **Facturación y Tickets Térmicos**: Generación automática de tickets en formato de rollo térmico (58mm) al procesar movimientos, imprimiendo la Cédula/RUC del cliente si corresponde, con posibilidad de re-impresión desde el historial.
+*   **Acceso Basado en Roles (RBAC) y Registro de Identidad**: Blindaje de seguridad estricto con jerarquías estándar de la industria mediante bloqueo de Backend y Frontend:
     *   **Admin/Dueño:** Acceso absoluto a todas las tablas, nómina, finanzas y configuración.
     *   **Gerente:** Control operativo del negocio y gestión de compras y ventas.
     *   **Bodeguero:** Control logístico enfocado únicamente a inyectar ingresos de stock (Compras).
-    *   **Cajero:** Control focalizado en salida de mercancía e ingresos de caja (Ventas). Ocultando la visualización de personal/nómina para evitar fraude ético.
-*   **Integridad de Datos y Auditoría:** 
+    *   **Cajero:** Control focalizado en salida de mercancía e ingresos de caja (Ventas). Ocultando la visualización de personal/nómina para evitar fraude ético. Cada empleado queda registrado con su Cédula/RUC única en el sistema.
+*   **Integridad de Datos y Auditoría Extendida**: 
     *   Generación de `SKU/COD` autogenerado para productos.
-    *   **Cámara de Auditoría Global:** Historial Fiscal centralizado con registro imborrable del detalle de cada transacción, garantizando la inmutabilidad de precios y cantidades en el tiempo.
+    *   **Cámara de Auditoría Global**: Historial Fiscal centralizado con registro imborrable del detalle de cada transacción, enlazando el código del operador que realizó la venta, el total facturado, y la cédula del cliente.
     *   Cierre en bloque (`readOnly`) de filas después de salvadas para prevenir la sobreescritura accidental.
 
 ## 🛠️ Stack Tecnológico
