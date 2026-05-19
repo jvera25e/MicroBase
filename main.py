@@ -39,6 +39,7 @@ def init_db(db: Session):
         db.refresh(cli)
         db.add_all([
             models.AppField(table_id=cli.id, name="Nombre", field_type="text"),
+            models.AppField(table_id=cli.id, name="Cédula", field_type="text"),
             models.AppField(table_id=cli.id, name="Teléfono", field_type="text"),
             models.AppField(table_id=cli.id, name="Email", field_type="text")
         ])
@@ -177,6 +178,11 @@ def api_register(payload: schemas.UserCreate, request: Request, response: Respon
     user = db.query(models.User).filter(models.User.email == payload.email).first()
     if user:
         raise HTTPException(status_code=400, detail="Email ya registrado")
+        
+    if getattr(payload, "cedula", None):
+        existing_cedula = db.query(models.User).filter(models.User.cedula == payload.cedula).first()
+        if existing_cedula:
+            raise HTTPException(status_code=400, detail="Cédula/RUC ya registrado")
     
     nuevo_codigo = "EMP-" + str(uuid.uuid4())[:6].upper()
     
@@ -185,7 +191,8 @@ def api_register(payload: schemas.UserCreate, request: Request, response: Respon
         full_name=payload.full_name, 
         hashed_password=payload.password,
         role=payload.role,
-        employee_code=nuevo_codigo
+        employee_code=nuevo_codigo,
+        cedula=getattr(payload, "cedula", None)
     )
     db.add(new_user)
     db.commit()
@@ -444,11 +451,12 @@ def api_inventory_movement(payload: schemas.MovementPayload, request: Request, d
     first_item = db.query(models.AppRecord).filter(models.AppRecord.id == payload.items[0].record_id).first() if payload.items else None
     
     label_sujeto = "Proveedor" if payload.type == "Compra" else "Cliente"
+    cedula_text = f" | Cédula/RUC: {payload.client_cedula}" if getattr(payload, "client_cedula", None) else ""
     audit = models.AppAudit(
         table_id=first_item.table_id if first_item else None,
         record_id=None,
         employee_code=user.employee_code,
-        action=f"{payload.type} | {label_sujeto}: {payload.client_name or 'Consumidor Final'} | Total: ${payload.total:.2f}",
+        action=f"{payload.type} | {label_sujeto}: {payload.client_name or 'Consumidor Final'}{cedula_text} | Total: ${payload.total:.2f}",
         details=payload.model_dump()
     )
     db.add(audit)
@@ -460,14 +468,22 @@ def api_inventory_movement(payload: schemas.MovementPayload, request: Request, d
 @app.get("/api/clients/suggest", tags=["inventory"])
 def api_clients_suggest(db: Session = Depends(database.get_db)):
     t = db.query(models.AppTable).filter(models.AppTable.name.ilike('cliente%')).first()
-    names = []
+    results = []
     if t:
         for r in t.records:
-            # Intentar buscar en 'Nombre' o 'Nombre de Empresa'
             n = r.data.get('Nombre') or r.data.get('Nombre Completo')
-            if n and n not in names:
-                names.append(n)
-    return names
+            c = r.data.get('Cédula') or r.data.get('Cedula') or r.data.get('RUC') or r.data.get('Identificación') or ""
+            if n or c:
+                results.append({"name": n, "cedula": c})
+    
+    unique_results = []
+    seen = set()
+    for item in results:
+        identifier = f"{item['name']}-{item['cedula']}"
+        if identifier not in seen:
+            seen.add(identifier)
+            unique_results.append(item)
+    return unique_results
 
 @app.get("/api/suppliers/suggest", tags=["inventory"])
 def api_suppliers_suggest(db: Session = Depends(database.get_db)):

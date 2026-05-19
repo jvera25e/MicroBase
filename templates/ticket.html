@@ -20,6 +20,9 @@
         <p><strong>Operador:</strong> {{ audit.employee_code }}</p>
         <p><strong>{% if audit.details.type == 'Compra' %}Proveedor{% else %}Cliente{% endif %}:</strong> {{
             audit.details.client_name or 'Consumidor Final' }}</p>
+        {% if audit.details.client_cedula %}
+        <p><strong>Cédula/RUC:</strong> {{ audit.details.client_cedula }}</p>
+        {% endif %}
     </div>
 
     <table>

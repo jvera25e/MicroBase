@@ -130,7 +130,8 @@
     </div>
 </div>
 
-<datalist id="clients-sug"></datalist>
+<datalist id="clients-name-sug"></datalist>
+<datalist id="clients-cedula-sug"></datalist>
 
 <!-- Extra: Side Panel para Movimientos -->
 <div id="movement-panel" class="side-panel">
@@ -152,10 +153,32 @@
             {% endif %}
         </div>
         <div style="margin-bottom: 20px; background: rgba(0,0,0,0.1); padding: 12px; border-radius: 8px;">
-            <label id="lbl-mov-client" style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 6px; font-weight: bold;">
-                <i data-lucide="user" style="width: 12px; margin-right: 4px;"></i> Destinatario / Cliente (Opcional)
-            </label>
-            <input type="text" id="mov-client" list="clients-sug" class="input-neumorphic" placeholder="Selecciona o escribe..." style="width: 100%;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <label id="lbl-mov-client" style="font-size: 0.8rem; color: var(--text-muted); font-weight: bold; margin: 0;">
+                    <i data-lucide="user" style="width: 12px; margin-right: 4px;"></i> Destinatario / Cliente
+                </label>
+                <label style="font-size: 0.75rem; color: var(--text-muted); display: flex; align-items: center; cursor: pointer;">
+                    <input type="checkbox" id="mov-consumidor-final" onchange="toggleConsumidorFinal()" style="margin-right: 4px;"> Consumidor Final
+                </label>
+            </div>
+            
+            <div id="search-type-radios" style="display: flex; gap: 15px; margin-bottom: 10px; font-size: 0.85rem;">
+                <label style="cursor: pointer;"><input type="radio" name="client-search-type" value="nombre" checked onchange="toggleClientSearchType()"> Buscar por Nombre</label>
+                <label style="cursor: pointer;"><input type="radio" name="client-search-type" value="cedula" onchange="toggleClientSearchType()"> Buscar por Cédula/RUC</label>
+            </div>
+
+            <div id="div-client-nombre">
+                <input type="text" id="mov-client-name" list="clients-name-sug" class="input-neumorphic" placeholder="Nombre..." style="width: 100%; margin-bottom: 8px;" onchange="autoFillClient('name')">
+            </div>
+            
+            <div id="div-client-cedula" style="display: none;">
+                <div style="display: flex; gap: 10px; margin-bottom: 8px; font-size: 0.8rem;">
+                    <label style="cursor: pointer;"><input type="radio" name="cedula-type" value="cedula" checked onchange="validateCedulaInput()"> Cédula (10 dígitos)</label>
+                    <label style="cursor: pointer;"><input type="radio" name="cedula-type" value="ruc" onchange="validateCedulaInput()"> RUC (13 dígitos)</label>
+                </div>
+                <input type="text" id="mov-client-cedula" list="clients-cedula-sug" class="input-neumorphic" placeholder="Sólo números..." style="width: 100%; margin-bottom: 4px;" oninput="validateCedulaInput()" onchange="autoFillClient('cedula')">
+                <small id="cedula-error" style="color: var(--danger); display: none; font-size: 0.75rem;">Longitud incorrecta.</small>
+            </div>
         </div>
         
         <div style="margin-bottom: 10px; position: relative;">

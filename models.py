@@ -13,6 +13,7 @@ class User(Base):
     notifications = Column(Boolean, default=True)
     role = Column(String, default="empleado")
     employee_code = Column(String, unique=True, index=True)
+    cedula = Column(String, unique=True, index=True, nullable=True)
 
 class AppAudit(Base):
     __tablename__ = "app_audits"

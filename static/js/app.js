@@ -976,16 +976,30 @@ async function loadSuggestions() {
     try {
         const res = await fetch(endpoint);
         if (res.ok) {
-            const names = await res.json();
-            const dl = document.getElementById('clients-sug');
-            if (dl) {
-                dl.innerHTML = '';
-                names.forEach(n => {
+            const data = await res.json();
+            const dlName = document.getElementById('clients-name-sug');
+            const dlCedula = document.getElementById('clients-cedula-sug');
+            if (dlName) dlName.innerHTML = '';
+            if (dlCedula) dlCedula.innerHTML = '';
+            
+            window.clientsData = [];
+            
+            data.forEach(item => {
+                let name = typeof item === 'string' ? item : item.name;
+                let cedula = typeof item === 'string' ? '' : item.cedula;
+                window.clientsData.push({name, cedula});
+                
+                if (dlName && name) {
                     let opt = document.createElement('option');
-                    opt.value = n;
-                    dl.appendChild(opt);
-                });
-            }
+                    opt.value = name;
+                    dlName.appendChild(opt);
+                }
+                if (dlCedula && cedula) {
+                    let opt = document.createElement('option');
+                    opt.value = cedula;
+                    dlCedula.appendChild(opt);
+                }
+            });
         }
     } catch (e) { }
 
@@ -1189,7 +1203,13 @@ function renderCart() {
 async function processMovement() {
     let typeEl = document.querySelector('input[name="mov-type"]:checked');
     let type = typeEl ? typeEl.value : "Venta";
-    let clientName = document.getElementById('mov-client').value.trim();
+    let isCF = document.getElementById('mov-consumidor-final')?.checked;
+    let clientName = isCF ? 'Consumidor Final' : document.getElementById('mov-client-name').value.trim();
+    let clientCedula = isCF ? '9999999999' : document.getElementById('mov-client-cedula').value.trim();
+
+    if (!isCF && document.getElementById('cedula-error') && document.getElementById('cedula-error').style.display === 'block') {
+        return showToast("La cédula/RUC tiene una longitud incorrecta.", "warning");
+    }
 
     let payload = Object.values(cartItems).map(i => {
         let precioVal = i.record.data['Precio por Unidad'] || i.record.data['Precio'] || i.record.data['precio'] || 0;
@@ -1215,6 +1235,7 @@ async function processMovement() {
             body: JSON.stringify({
                 type: type,
                 client_name: clientName,
+                client_cedula: clientCedula,
                 subtotal: parseFloat(subtotalText),
                 iva: parseFloat(ivaText),
                 total: parseFloat(totalText),
@@ -1224,7 +1245,12 @@ async function processMovement() {
         if (res.ok) {
             const data = await res.json();
             cartItems = {};
-            document.getElementById('mov-client').value = '';
+            document.getElementById('mov-client-name').value = '';
+            document.getElementById('mov-client-cedula').value = '';
+            if (document.getElementById('mov-consumidor-final')) {
+                document.getElementById('mov-consumidor-final').checked = false;
+                toggleConsumidorFinal();
+            }
             closeMovementPanel();
             loadTableSilently();
 
@@ -1241,6 +1267,87 @@ async function processMovement() {
 }
 
 // ---- Table Search Filter ----
+
+function toggleConsumidorFinal() {
+    let isCF = document.getElementById('mov-consumidor-final').checked;
+    let nameInput = document.getElementById('mov-client-name');
+    let cedInput = document.getElementById('mov-client-cedula');
+    let radios = document.getElementById('search-type-radios');
+    
+    if (isCF) {
+        nameInput.value = 'Consumidor Final';
+        nameInput.disabled = true;
+        cedInput.value = '9999999999';
+        cedInput.disabled = true;
+        if(radios) {
+            radios.style.opacity = '0.5';
+            radios.style.pointerEvents = 'none';
+        }
+        document.getElementById('cedula-error').style.display = 'none';
+    } else {
+        nameInput.value = '';
+        nameInput.disabled = false;
+        cedInput.value = '';
+        cedInput.disabled = false;
+        if(radios) {
+            radios.style.opacity = '1';
+            radios.style.pointerEvents = 'auto';
+        }
+    }
+}
+
+function toggleClientSearchType() {
+    let searchType = document.querySelector('input[name="client-search-type"]:checked').value;
+    if (searchType === 'nombre') {
+        document.getElementById('div-client-nombre').style.display = 'block';
+        document.getElementById('div-client-cedula').style.display = 'none';
+    } else {
+        document.getElementById('div-client-nombre').style.display = 'none';
+        document.getElementById('div-client-cedula').style.display = 'block';
+    }
+}
+
+function validateCedulaInput() {
+    let input = document.getElementById('mov-client-cedula');
+    let typeEl = document.querySelector('input[name="cedula-type"]:checked');
+    let type = typeEl ? typeEl.value : 'cedula';
+    let errorEl = document.getElementById('cedula-error');
+    
+    input.value = input.value.replace(/\D/g, '');
+    
+    let expectedLength = type === 'cedula' ? 10 : 13;
+    input.maxLength = expectedLength;
+    
+    if (input.value.length > expectedLength) {
+        input.value = input.value.slice(0, expectedLength);
+    }
+    
+    if (input.value.length > 0 && input.value.length !== expectedLength) {
+        errorEl.textContent = `Debe tener exactamente ${expectedLength} dígitos.`;
+        errorEl.style.display = 'block';
+    } else {
+        errorEl.style.display = 'none';
+    }
+}
+
+function autoFillClient(source) {
+    if (!window.clientsData) return;
+    let nameInput = document.getElementById('mov-client-name');
+    let cedInput = document.getElementById('mov-client-cedula');
+    
+    if (source === 'name') {
+        let match = window.clientsData.find(c => c.name === nameInput.value);
+        if (match && match.cedula) {
+            cedInput.value = match.cedula;
+        }
+    } else if (source === 'cedula') {
+        let match = window.clientsData.find(c => c.cedula === cedInput.value);
+        if (match && match.name) {
+            nameInput.value = match.name;
+        }
+    }
+}
+
 function filterTables() {
     const q = document.getElementById('table-search').value.toLowerCase();
     const items = document.querySelectorAll('.table-item');
@@ -1365,8 +1472,14 @@ async function login() {
 async function checkRegisterEmail() {
     const name = document.getElementById('reg-name').value;
     const email = document.getElementById('reg-email').value;
-    if (!name || !email) return showToast("Por favor ingresa nombre y correo", "warning");
+    const cedula = document.getElementById('reg-cedula').value;
+    const typeEl = document.querySelector('input[name="reg-cedula-type"]:checked');
+    const type = typeEl ? typeEl.value : 'cedula';
+    const expectedLength = type === 'cedula' ? 10 : 13;
+    
+    if (!name || !email || !cedula) return showToast("Por favor ingresa nombre, correo y cédula", "warning");
     if (!email.includes('@')) return showToast("El correo debe llevar '@'", "warning");
+    if (cedula.length !== expectedLength) return showToast(`La cédula/RUC debe tener exactamente ${expectedLength} dígitos numéricos`, "warning");
 
     try {
         const res = await fetch('/auth/check-email', {
@@ -1405,18 +1518,23 @@ function backToRegStep(step) {
 async function registerUser() {
     const name = document.getElementById('reg-name').value;
     const email = document.getElementById('reg-email').value;
+    const cedula = document.getElementById('reg-cedula').value;
     const password = document.getElementById('reg-pass').value;
     const confirm = document.getElementById('reg-confirm').value;
     const role = document.getElementById('reg-role').value;
+    const typeEl = document.querySelector('input[name="reg-cedula-type"]:checked');
+    const type = typeEl ? typeEl.value : 'cedula';
+    const expectedLength = type === 'cedula' ? 10 : 13;
 
-    if (!name || !email || !password) return showToast("Llena todos los campos", "warning");
+    if (!name || !email || !password || !cedula) return showToast("Llena todos los campos", "warning");
     if (password !== confirm) return showToast("Las contraseñas no coinciden", "error");
+    if (cedula.length !== expectedLength) return showToast(`La cédula/RUC debe tener exactamente ${expectedLength} dígitos numéricos`, "error");
 
     try {
         const res = await fetch('/auth/register', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, full_name: name, password, role })
+            body: JSON.stringify({ email, full_name: name, password, role, cedula })
         });
         if (res.ok) {
             const btnVolver = document.querySelector('button[onclick*="/dashboard"]');
@@ -1441,6 +1559,32 @@ async function logout() {
         window.location.href = "/login";
     } catch (e) {
         console.error(e);
+    }
+}
+
+function updateRegisterCedulaLength() {
+    let input = document.getElementById('reg-cedula');
+    if (!input) return;
+    let typeEl = document.querySelector('input[name="reg-cedula-type"]:checked');
+    let type = typeEl ? typeEl.value : 'cedula';
+    let errorEl = document.getElementById('reg-cedula-error');
+    
+    input.value = input.value.replace(/\D/g, '');
+    
+    let expectedLength = type === 'cedula' ? 10 : 13;
+    input.maxLength = expectedLength;
+    
+    if (input.value.length > expectedLength) {
+        input.value = input.value.slice(0, expectedLength);
+    }
+    
+    if (errorEl) {
+        if (input.value.length > 0 && input.value.length !== expectedLength) {
+            errorEl.textContent = `Debe tener exactamente ${expectedLength} dígitos.`;
+            errorEl.style.display = 'block';
+        } else {
+            errorEl.style.display = 'none';
+        }
     }
 }
 

@@ -5,6 +5,7 @@ class UserBase(BaseModel):
     email: str
     full_name: str
     notifications: Optional[bool] = True
+    cedula: Optional[str] = None
 
     @field_validator('email', mode='before')
     @classmethod
@@ -78,6 +79,7 @@ class MovementItem(BaseModel):
 class MovementPayload(BaseModel):
     type: str # 'Venta' or 'Compra'
     client_name: Optional[str] = None
+    client_cedula: Optional[str] = None
     subtotal: float = 0.0
     iva: float = 0.0
     total: float = 0.0
