@@ -15,7 +15,8 @@
     </div>
 
     <div style="background: var(--bg-card); border: 1px solid var(--border-glass); border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
-        <table class="data-table" style="width: 100%;">
+        <div class="table-scroll-area">
+            <table class="data-table" style="width: 100%;">
             <thead>
                 <tr>
                     <th style="width: 80px;">Réf (ID)</th>
@@ -71,6 +72,7 @@
                 {% endif %}
             </tbody>
         </table>
+        </div>
     </div>
 </div>
 {% endblock %}

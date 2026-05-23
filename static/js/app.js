@@ -876,18 +876,46 @@ async function loadTableSilently() {
 // ---- Sidebar Logic ----
 function toggleSidebar() {
     const sidebar = document.querySelector('.sidebar');
-    if (sidebar) {
+    const overlay = document.querySelector('.sidebar-overlay');
+    const mobileNavbar = document.querySelector('.mobile-navbar');
+    if (!sidebar) return;
+
+    const isMobile = mobileNavbar && window.getComputedStyle(mobileNavbar).display !== 'none';
+
+    if (isMobile) {
+        sidebar.classList.toggle('mobile-open');
+        if (overlay) {
+            overlay.classList.toggle('active');
+        }
+        if (sidebar.classList.contains('mobile-open')) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
+    } else {
         sidebar.classList.toggle('collapsed');
         localStorage.setItem('sidebar_collapsed', sidebar.classList.contains('collapsed'));
     }
 }
 
+function closeSidebar() {
+    const sidebar = document.querySelector('.sidebar');
+    const overlay = document.querySelector('.sidebar-overlay');
+    if (sidebar) sidebar.classList.remove('mobile-open');
+    if (overlay) overlay.classList.remove('active');
+    document.body.style.overflow = '';
+}
+
 // Expandir sidebar al hacer clic en ella si está contraída
 function initSidebarExpansion() {
     const sidebar = document.querySelector('.sidebar');
+    const mobileNavbar = document.querySelector('.mobile-navbar');
     if (!sidebar) return;
 
     sidebar.addEventListener('click', (e) => {
+        const isMobile = mobileNavbar && window.getComputedStyle(mobileNavbar).display !== 'none';
+        if (isMobile) return; // Ignorar en móvil
+
         // Ignorar si el clic fue en un botón, enlace o input para no interferir con su acción ni re-expandir inmediatamente
         if (e.target.closest('button') || e.target.closest('a') || e.target.closest('input')) {
             return;
@@ -906,7 +934,10 @@ function initSidebarExpansion() {
 
 // Auto-collapse on link click & restore state
 document.addEventListener('DOMContentLoaded', () => {
-    if (localStorage.getItem('sidebar_collapsed') === 'true') {
+    const mobileNavbar = document.querySelector('.mobile-navbar');
+    const isMobile = mobileNavbar && window.getComputedStyle(mobileNavbar).display !== 'none';
+
+    if (!isMobile && localStorage.getItem('sidebar_collapsed') === 'true') {
         document.querySelector('.sidebar')?.classList.add('collapsed');
     }
     
@@ -915,11 +946,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const navLinks = document.querySelectorAll('.sidebar .nav-link');
     navLinks.forEach(link => {
         link.addEventListener('click', () => {
-            const sidebar = document.querySelector('.sidebar');
-            // If they click on a table link, let's collapse it to give space
-            if (sidebar && !sidebar.classList.contains('collapsed')) {
-                sidebar.classList.add('collapsed');
-                localStorage.setItem('sidebar_collapsed', 'true');
+            const currentIsMobile = mobileNavbar && window.getComputedStyle(mobileNavbar).display !== 'none';
+            if (currentIsMobile) {
+                closeSidebar();
+            } else {
+                const sidebar = document.querySelector('.sidebar');
+                // If they click on a table link, let's collapse it to give space
+                if (sidebar && !sidebar.classList.contains('collapsed')) {
+                    sidebar.classList.add('collapsed');
+                    localStorage.setItem('sidebar_collapsed', 'true');
+                }
             }
         });
     });
@@ -1365,7 +1401,13 @@ function filterTables() {
 
 // ---- Audits / Historial ----
 async function openAuditsModal() {
-    document.getElementById('audits-modal').style.display = 'flex';
+    const overlay = document.getElementById('audits-modal-overlay');
+    if (overlay) {
+        overlay.classList.add('active');
+    } else {
+        const modal = document.getElementById('audits-modal');
+        if (modal) modal.style.display = 'flex';
+    }
     const tbody = document.getElementById('audits-table-body');
     tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Cargando historial...</td></tr>';
 

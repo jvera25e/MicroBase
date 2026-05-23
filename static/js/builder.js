@@ -1,8 +1,81 @@
 document.addEventListener('DOMContentLoaded', () => {
     const draggables = document.querySelectorAll('.draggable-item');
     const dropZone = document.getElementById('drop-zone');
+    const tableNameInput = document.getElementById('table-name');
+    const tableDescInput = document.getElementById('table-description');
+
+    // Evitar que se suelten componentes en el input de título o descripción
+    if (tableNameInput && tableDescInput) {
+        [tableNameInput, tableDescInput].forEach(input => {
+            input.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'none'; // Cursor de "bloqueado / no permitido"
+            });
+            input.addEventListener('drop', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+            });
+        });
+    }
+
     let fieldCount = 0;
     let draggedData = null;
+
+    // ── Auto-scroll durante Drag & Drop ──────────────────────────────────────
+    let scrollDirection = 0; // 0 = none, -1 = up, 1 = down
+    let scrollInterval = null;
+
+    function startAutoScroll(direction) {
+        if (scrollDirection === direction) return;
+        stopAutoScroll();
+        scrollDirection = direction;
+        
+        const speed = 12;
+        const mainContent = document.querySelector('.main-content');
+        
+        scrollInterval = setInterval(() => {
+            const isMainContentScrollable = mainContent && 
+                (window.getComputedStyle(mainContent).overflowY === 'auto' || 
+                 window.getComputedStyle(mainContent).overflowY === 'scroll') &&
+                mainContent.scrollHeight > mainContent.clientHeight;
+                
+            const scrollContainer = isMainContentScrollable ? mainContent : window;
+            
+            if (scrollContainer === window) {
+                window.scrollBy(0, direction * speed);
+            } else {
+                scrollContainer.scrollBy(0, direction * speed);
+            }
+        }, 16);
+    }
+
+    function stopAutoScroll() {
+        if (scrollInterval) {
+            clearInterval(scrollInterval);
+            scrollInterval = null;
+        }
+        scrollDirection = 0;
+    }
+
+    document.addEventListener('dragover', (e) => {
+        // Solo activar auto-scroll si hay un drag activo en el constructor
+        if (!draggedData) return;
+        
+        const threshold = 100; // píxeles desde el borde de la pantalla
+        const mouseY = e.clientY;
+        const viewportHeight = window.innerHeight;
+
+        if (mouseY < threshold) {
+            startAutoScroll(-1);
+        } else if (mouseY > viewportHeight - threshold) {
+            startAutoScroll(1);
+        } else {
+            stopAutoScroll();
+        }
+    });
+
+    document.addEventListener('dragend', stopAutoScroll);
+    document.addEventListener('drop', stopAutoScroll);
 
     window.appIsDirty = false; // true cuando hay campos en el canvas sin guardar
     window.appLeaveMsg = '¿Seguro que quieres salir? Los cambios del constructor no se guardarán.';
