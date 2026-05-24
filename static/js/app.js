@@ -901,8 +901,17 @@ function toggleSidebar() {
             document.body.style.overflow = '';
         }
     } else {
-        sidebar.classList.toggle('collapsed');
-        localStorage.setItem('sidebar_collapsed', sidebar.classList.contains('collapsed'));
+        if (sidebar.dataset.hoverExpanded === 'true') {
+            sidebar.dataset.hoverExpanded = 'false';
+            localStorage.setItem('sidebar_collapsed', 'false');
+            sidebar.classList.remove('collapsed');
+        } else {
+            sidebar.classList.toggle('collapsed');
+            localStorage.setItem('sidebar_collapsed', sidebar.classList.contains('collapsed'));
+            if (!sidebar.classList.contains('collapsed')) {
+                sidebar.dataset.hoverExpanded = 'false';
+            }
+        }
     }
 }
 
@@ -914,27 +923,33 @@ function closeSidebar() {
     document.body.style.overflow = '';
 }
 
-// Expandir sidebar al hacer clic en ella si está contraída
+// Expandir sidebar al pasar el mouse si está contraída
 function initSidebarExpansion() {
     const sidebar = document.querySelector('.sidebar');
     const mobileNavbar = document.querySelector('.mobile-navbar');
     if (!sidebar) return;
 
-    sidebar.addEventListener('click', (e) => {
+    sidebar.addEventListener('mouseenter', (e) => {
         const isMobile = mobileNavbar && window.getComputedStyle(mobileNavbar).display !== 'none';
         if (isMobile) return; // Ignorar en móvil
-
-        // Ignorar si el clic fue en un botón, enlace o input para no interferir con su acción ni re-expandir inmediatamente
-        if (e.target.closest('button') || e.target.closest('a') || e.target.closest('input')) {
-            return;
-        }
 
         // Solo expandir si está colapsada
         if (sidebar.classList.contains('collapsed')) {
             sidebar.classList.remove('collapsed');
-            localStorage.setItem('sidebar_collapsed', 'false');
-            // Opcional: Re-crear iconos de lucide por si acaso
+            sidebar.dataset.hoverExpanded = 'true';
             if (typeof lucide !== 'undefined') lucide.createIcons();
+        }
+    });
+
+    sidebar.addEventListener('mouseleave', (e) => {
+        const isMobile = mobileNavbar && window.getComputedStyle(mobileNavbar).display !== 'none';
+        if (isMobile) return;
+
+        if (sidebar.dataset.hoverExpanded === 'true') {
+            if (localStorage.getItem('sidebar_collapsed') === 'true') {
+                sidebar.classList.add('collapsed');
+            }
+            sidebar.dataset.hoverExpanded = 'false';
         }
     });
 }
@@ -963,6 +978,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (sidebar && !sidebar.classList.contains('collapsed')) {
                     sidebar.classList.add('collapsed');
                     localStorage.setItem('sidebar_collapsed', 'true');
+                    sidebar.dataset.hoverExpanded = 'false';
                 }
             }
         });
