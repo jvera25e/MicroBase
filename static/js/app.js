@@ -128,7 +128,7 @@ function renderTable(fields, records) {
             let isAutoId = field.name.toUpperCase() === 'ID';
             // Los campos auto-generados siempre son texto (el browser ignora strings en type="number")
             let inputType = (isSku || isAutoId) ? 'text'
-                : field.field_type === 'number' ? 'number'
+                : (field.field_type.startsWith('number') || field.field_type === 'number') ? 'number'
                     : field.field_type === 'date' ? 'date'
                         : 'text';
 
@@ -166,6 +166,13 @@ function renderTable(fields, records) {
             } else {
                 input = document.createElement('input');
                 input.type = inputType;
+                if (inputType === 'number') {
+                    if (field.field_type === 'number_int') {
+                        input.step = "1";
+                    } else {
+                        input.step = "any";
+                    }
+                }
                 input.value = val;
                 input.className = 'cell-input';
                 if (isSku || isAutoId) {
@@ -644,7 +651,8 @@ function openManageColumnsModal() {
                 <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:4px;">Tipo</label>
                 <select class="input-neumorphic col-edit-type" data-field-id="${field.id}" style="width:100%; padding:8px;" onchange="window.toggleSuggestedOptions(this)">
                     <option value="text"   ${field.field_type === 'text' ? 'selected' : ''}>Texto</option>
-                    <option value="number" ${field.field_type === 'number' ? 'selected' : ''}>Número</option>
+                    <option value="number_int" ${field.field_type === 'number_int' ? 'selected' : ''}>Número Entero</option>
+                    <option value="number_decimal" ${['number_decimal', 'number'].includes(field.field_type) ? 'selected' : ''}>Número Decimal</option>
                     <option value="date"   ${field.field_type === 'date' ? 'selected' : ''}>Fecha</option>
                     <option value="select" ${field.field_type === 'select' ? 'selected' : ''}>Selección</option>
                 </select>

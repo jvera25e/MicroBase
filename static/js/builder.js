@@ -29,18 +29,18 @@ document.addEventListener('DOMContentLoaded', () => {
         if (scrollDirection === direction) return;
         stopAutoScroll();
         scrollDirection = direction;
-        
+
         const speed = 12;
         const mainContent = document.querySelector('.main-content');
-        
+
         scrollInterval = setInterval(() => {
-            const isMainContentScrollable = mainContent && 
-                (window.getComputedStyle(mainContent).overflowY === 'auto' || 
-                 window.getComputedStyle(mainContent).overflowY === 'scroll') &&
+            const isMainContentScrollable = mainContent &&
+                (window.getComputedStyle(mainContent).overflowY === 'auto' ||
+                    window.getComputedStyle(mainContent).overflowY === 'scroll') &&
                 mainContent.scrollHeight > mainContent.clientHeight;
-                
+
             const scrollContainer = isMainContentScrollable ? mainContent : window;
-            
+
             if (scrollContainer === window) {
                 window.scrollBy(0, direction * speed);
             } else {
@@ -60,7 +60,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('dragover', (e) => {
         // Solo activar auto-scroll si hay un drag activo en el constructor
         if (!draggedData) return;
-        
+
         const threshold = 100; // píxeles desde el borde de la pantalla
         const mouseY = e.clientY;
         const viewportHeight = window.innerHeight;
@@ -192,7 +192,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // Sugerencias pre-llenadas por tipo de campo
         const SUGGESTED_OPTIONS = {
             'text': 'Nombre, Email, Dirección',
-            'number': '0, 10, 100',
+            'number_int': '0, 10, 100',
+            'number_decimal': '8.30, 10.50',
             'date': 'Fecha de Ingreso, Fecha de Despido',
             'select': ''
         };
@@ -222,7 +223,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="field-options-group">
                     <label>Nombre de la columna:</label>
                     <input type="text" class="field-name-input input-neumorphic"
-                           placeholder="Ej: Estado, Edad..." value="">
+                           placeholder="Ej: Precio, Altura, Peso..." value="">
                 </div>
                 ${hintHtml}
             </div>
