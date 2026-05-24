@@ -7,6 +7,51 @@ from sqlalchemy import cast, String, or_
 import database, models, schemas
 import uuid
 from sqlalchemy.orm.attributes import flag_modified
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+import os
+
+def send_status_email(to_email: str, name: str, status: str):
+    smtp_server = os.getenv("SMTP_SERVER", "smtp.gmail.com")
+    smtp_port = int(os.getenv("SMTP_PORT", "587"))
+    smtp_user = os.getenv("SMTP_USER")
+    smtp_password = os.getenv("SMTP_PASSWORD")
+    
+    if not smtp_user or not smtp_password:
+        print("SMTP no configurado. Saltando envío de correo.")
+        return False, "SMTP credentials missing"
+
+    subject = ""
+    body = ""
+    
+    if status == "approved":
+        subject = "Tu cuenta ha sido aprobada - MicroBase No-Code"
+        body = f"Hola {name},\n\nTu cuenta ha sido aprobada por el administrador. Ahora puedes iniciar sesión en el sistema.\n\nSaludos,\nEl equipo de MicroBase No-Code"
+    elif status == "rejected":
+        subject = "Tu solicitud de cuenta ha sido rechazada - MicroBase No-Code"
+        body = f"Hola {name},\n\nLamentamos informarte que tu solicitud de cuenta ha sido rechazada por el administrador.\n\nSaludos,\nEl equipo de MicroBase No-Code"
+    elif status == "deleted":
+        subject = "Tu cuenta ha sido eliminada - MicroBase No-Code"
+        body = f"Hola {name},\n\nTe informamos que tu cuenta ha sido eliminada del sistema por el administrador.\n\nSaludos,\nEl equipo de MicroBase No-Code"
+    
+    msg = MIMEMultipart()
+    msg['From'] = smtp_user
+    msg['To'] = to_email
+    msg['Subject'] = subject
+    msg.attach(MIMEText(body, 'plain', 'utf-8'))
+    
+    try:
+        server = smtplib.SMTP(smtp_server, smtp_port)
+        server.starttls()
+        server.login(smtp_user, smtp_password)
+        server.send_message(msg)
+        server.quit()
+        print(f"Correo enviado exitosamente a {to_email}")
+        return True, ""
+    except Exception as e:
+        print(f"Error al enviar correo a {to_email}: {e}")
+        return False, str(e)
 
 app = FastAPI(title="MicroBase No-Code")
 
@@ -16,56 +61,55 @@ models.Base.metadata.create_all(bind=database.engine)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
-# --- Funciones Auxiliares (Seeders) ---
-def init_db(db: Session):
-    if db.query(models.AppTable).first() is None:
+def init_db(db: Session, business_id: int):
+    if db.query(models.AppTable).filter_by(business_id=business_id).first() is None:
         # Inventario
-        inv = models.AppTable(name="Inventario", description="Gestión de existencias")
+        inv = models.AppTable(name="Inventario", description="Gestión de existencias", business_id=business_id)
         db.add(inv)
         db.commit()
         db.refresh(inv)
         db.add_all([
-            models.AppField(table_id=inv.id, name="Nombre", field_type="text"),
-            models.AppField(table_id=inv.id, name="Marca", field_type="text"),
-            models.AppField(table_id=inv.id, name="COD", field_type="text"),
-            models.AppField(table_id=inv.id, name="Unidad de Venta", field_type="text"),
-            models.AppField(table_id=inv.id, name="Precio por Unidad", field_type="number"),
-            models.AppField(table_id=inv.id, name="Cantidad", field_type="number")
+            models.AppField(table_id=inv.id, name="Nombre", field_type="text", order_index=0),
+            models.AppField(table_id=inv.id, name="Marca", field_type="text", order_index=1),
+            models.AppField(table_id=inv.id, name="COD", field_type="text", order_index=2),
+            models.AppField(table_id=inv.id, name="Unidad de Venta", field_type="text", order_index=3),
+            models.AppField(table_id=inv.id, name="Precio por Unidad", field_type="number_decimal", order_index=4),
+            models.AppField(table_id=inv.id, name="Cantidad", field_type="number_int", order_index=5)
         ])
 
         # Clientes
-        cli = models.AppTable(name="Clientes", description="Base de clientes")
+        cli = models.AppTable(name="Clientes", description="Base de clientes", business_id=business_id)
         db.add(cli)
         db.commit()
         db.refresh(cli)
         db.add_all([
-            models.AppField(table_id=cli.id, name="Nombre", field_type="text"),
-            models.AppField(table_id=cli.id, name="Cédula", field_type="text"),
-            models.AppField(table_id=cli.id, name="Teléfono", field_type="text"),
-            models.AppField(table_id=cli.id, name="Email", field_type="text")
+            models.AppField(table_id=cli.id, name="Nombre", field_type="text", order_index=0),
+            models.AppField(table_id=cli.id, name="Cédula", field_type="text", order_index=1),
+            models.AppField(table_id=cli.id, name="Teléfono", field_type="text", order_index=2),
+            models.AppField(table_id=cli.id, name="Email", field_type="text", order_index=3)
         ])
 
         # Empleados
-        emp = models.AppTable(name="Empleados", description="Nómina y personal")
+        emp = models.AppTable(name="Empleados", description="Nómina y personal", business_id=business_id)
         db.add(emp)
         db.commit()
         db.refresh(emp)
         db.add_all([
-            models.AppField(table_id=emp.id, name="Nombre Completo", field_type="text"),
-            models.AppField(table_id=emp.id, name="Rol", field_type="select", options="manager, empleado"),
-            models.AppField(table_id=emp.id, name="Salario", field_type="number")
+            models.AppField(table_id=emp.id, name="Nombre Completo", field_type="text", order_index=0),
+            models.AppField(table_id=emp.id, name="Rol", field_type="select", options="manager, empleado", order_index=1),
+            models.AppField(table_id=emp.id, name="Salario", field_type="number_decimal", order_index=2)
         ])
 
         # Proveedores
-        prov = models.AppTable(name="Proveedores", description="Gestión de suministradores")
+        prov = models.AppTable(name="Proveedores", description="Gestión de suministradores", business_id=business_id)
         db.add(prov)
         db.commit()
         db.refresh(prov)
         db.add_all([
-            models.AppField(table_id=prov.id, name="Nombre de Empresa", field_type="text"),
-            models.AppField(table_id=prov.id, name="Contacto", field_type="text"),
-            models.AppField(table_id=prov.id, name="RUC / NIT", field_type="text"),
-            models.AppField(table_id=prov.id, name="Categoría", field_type="select", options="Alimentos, Bebidas, Embalaje, Otros")
+            models.AppField(table_id=prov.id, name="Nombre de Empresa", field_type="text", order_index=0),
+            models.AppField(table_id=prov.id, name="Contacto", field_type="text", order_index=1),
+            models.AppField(table_id=prov.id, name="RUC / NIT", field_type="text", order_index=2),
+            models.AppField(table_id=prov.id, name="Categoría", field_type="select", options="Alimentos, Bebidas, Embalaje, Otros", order_index=3)
         ])
         
         db.commit()
@@ -73,9 +117,7 @@ def init_db(db: Session):
 # Evento de inicio
 @app.on_event("startup")
 def on_startup():
-    db = database.SessionLocal()
-    init_db(db)
-    db.close()
+    pass
 
 def get_current_user(request: Request, db: Session):
     token = request.cookies.get("auth_token")
@@ -88,7 +130,7 @@ def get_current_user(request: Request, db: Session):
 async def home_redirect(request: Request, db: Session = Depends(database.get_db)):
     user = get_current_user(request, db)
     if not user:
-        return RedirectResponse(url="/login", status_code=status.HTTP_302_FOUND)
+        return templates.TemplateResponse("welcome.html", {"request": request})
     return RedirectResponse(url="/dashboard", status_code=status.HTTP_302_FOUND)
 
 @app.get("/login", response_class=HTMLResponse, include_in_schema=False)
@@ -112,12 +154,21 @@ async def dashboard_page(request: Request, db: Session = Depends(database.get_db
         return RedirectResponse(url="/login", status_code=status.HTTP_302_FOUND)
     return templates.TemplateResponse("dashboard.html", {"request": request, "user": user})
 
+@app.get("/staff", response_class=HTMLResponse, include_in_schema=False)
+async def staff_page(request: Request, db: Session = Depends(database.get_db)):
+    user = get_current_user(request, db)
+    if not user:
+        return RedirectResponse(url="/login", status_code=status.HTTP_302_FOUND)
+    if user.role != 'admin':
+        return RedirectResponse(url="/dashboard", status_code=status.HTTP_302_FOUND)
+    return templates.TemplateResponse("staff.html", {"request": request, "user": user})
+
 @app.get("/tables-view", response_class=HTMLResponse, include_in_schema=False)
 async def tables_view(request: Request, db: Session = Depends(database.get_db)):
     user = get_current_user(request, db)
     if not user:
         return RedirectResponse(url="/login", status_code=status.HTTP_302_FOUND)
-    tables = db.query(models.AppTable).all()
+    tables = db.query(models.AppTable).filter(models.AppTable.business_id == user.business_id).all()
     return templates.TemplateResponse("index.html", {"request": request, "tables": tables, "user": user})
 
 @app.get("/audits-view", response_class=HTMLResponse, include_in_schema=False)
@@ -126,7 +177,7 @@ async def audits_view(request: Request, q: str = None, limit: int = 25, db: Sess
     if not user:
         return RedirectResponse(url="/login", status_code=status.HTTP_302_FOUND)
     
-    query = db.query(models.AppAudit)
+    query = db.query(models.AppAudit).filter(models.AppAudit.business_id == user.business_id)
     
     if q:
         q_clean = q.strip()
@@ -180,7 +231,7 @@ async def create_table_page(request: Request, db: Session = Depends(database.get
     user = get_current_user(request, db)
     if not user or user.role not in ["admin", "manager"]:
         return RedirectResponse(url="/dashboard", status_code=status.HTTP_302_FOUND)
-    tables = db.query(models.AppTable).all()
+    tables = db.query(models.AppTable).filter(models.AppTable.business_id == user.business_id).all()
     return templates.TemplateResponse("create_table.html", {"request": request, "user": user, "tables": tables})
 
 @app.get("/ticket/{audit_id}", response_class=HTMLResponse, include_in_schema=False)
@@ -201,51 +252,91 @@ def check_email(payload: schemas.EmailCheck, db: Session = Depends(database.get_
     user = db.query(models.User).filter(models.User.email == payload.email).first()
     return {"exists": user is not None}
 
+@app.post("/auth/check-registration", tags=["auth"])
+def check_registration(payload: schemas.RegistrationCheck, db: Session = Depends(database.get_db)):
+    email_exists = db.query(models.User).filter(models.User.email == payload.email).first() is not None
+    cedula_exists = db.query(models.User).filter(models.User.cedula == payload.cedula).first() is not None
+    return {"email_exists": email_exists, "cedula_exists": cedula_exists}
+
 @app.post("/auth/register", response_model=schemas.UserResponse, tags=["auth"])
-def api_register(payload: schemas.UserCreate, request: Request, response: Response, db: Session = Depends(database.get_db)):
-    current_user = get_current_user(request, db)
-    
-    # Validaciones RBAC
-    if current_user:
-        if current_user.role == "manager" and payload.role in ["admin", "manager"]:
-            raise HTTPException(status_code=403, detail="Un Manager solo puede crear cuentas de Empleados.")
-        if current_user.role not in ["admin", "manager"]:
-            raise HTTPException(status_code=403, detail="No tienes permisos para registrar usuarios.")
-            
-    user = db.query(models.User).filter(models.User.email == payload.email).first()
-    if user:
+def api_register(payload: schemas.UserRegister, request: Request, response: Response, db: Session = Depends(database.get_db)):
+    # Validate cedula is required
+    if not payload.cedula:
+        raise HTTPException(status_code=400, detail="La cédula es obligatoria.")
+
+    existing_user = db.query(models.User).filter(models.User.email == payload.email).first()
+    if existing_user:
         raise HTTPException(status_code=400, detail="Email ya registrado")
         
-    if getattr(payload, "cedula", None):
-        existing_cedula = db.query(models.User).filter(models.User.cedula == payload.cedula).first()
-        if existing_cedula:
-            raise HTTPException(status_code=400, detail="Cédula/RUC ya registrado")
-    
+    existing_cedula = db.query(models.User).filter(models.User.cedula == payload.cedula).first()
+    if existing_cedula:
+        raise HTTPException(status_code=400, detail="Cédula/RUC ya registrado")
+
     nuevo_codigo = "EMP-" + str(uuid.uuid4())[:6].upper()
-    
-    new_user = models.User(
-        email=payload.email, 
-        full_name=payload.full_name, 
-        hashed_password=payload.password,
-        role=payload.role,
-        employee_code=nuevo_codigo,
-        cedula=getattr(payload, "cedula", None)
-    )
-    db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
-    
-    # Solo establecer cookie y loguear automáticamente si NO hay nadie logueado (registro inicial)
-    if not current_user:
-        response.set_cookie(key="auth_token", value=new_user.email, httponly=True)
+
+    # Flow 1: Create Business (Owner)
+    if payload.business_name:
+        existing_business = db.query(models.Business).filter(models.Business.code == payload.business_code).first()
+        if existing_business:
+            raise HTTPException(status_code=400, detail="El código de negocio ya está en uso. Por favor, elige otro.")
         
-    return new_user
+        new_business = models.Business(name=payload.business_name, code=payload.business_code)
+        db.add(new_business)
+        db.commit()
+        db.refresh(new_business)
+        
+        new_user = models.User(
+            email=payload.email, 
+            full_name=payload.full_name, 
+            hashed_password=payload.password,
+            role="admin",
+            employee_code=nuevo_codigo,
+            cedula=payload.cedula,
+            business_id=new_business.id,
+            status="active"
+        )
+        db.add(new_user)
+        db.commit()
+        db.refresh(new_user)
+        
+        # Initialize default tables for this new business
+        init_db(db, new_business.id)
+        
+        # Login automatically since they are the owner
+        response.set_cookie(key="auth_token", value=new_user.email, httponly=True)
+        return new_user
+
+    # Flow 2: Join Business (Employee)
+    else:
+        business = db.query(models.Business).filter(models.Business.code == payload.business_code).first()
+        if not business:
+            raise HTTPException(status_code=404, detail="No se encontró ningún negocio con ese código.")
+            
+        new_user = models.User(
+            email=payload.email, 
+            full_name=payload.full_name, 
+            hashed_password=payload.password,
+            role="empleado", # Will be assigned by admin later
+            employee_code=nuevo_codigo,
+            cedula=payload.cedula,
+            business_id=business.id,
+            status="pending"
+        )
+        db.add(new_user)
+        db.commit()
+        db.refresh(new_user)
+        
+        return new_user
 
 @app.post("/auth/login", tags=["auth"])
 def api_login(payload: schemas.UserLogin, response: Response, db: Session = Depends(database.get_db)):
     user = db.query(models.User).filter(models.User.email == payload.email).first()
     if not user or user.hashed_password != payload.password:
         raise HTTPException(status_code=401, detail="Credenciales inválidas")
+    
+    if user.status == "pending":
+        raise HTTPException(status_code=403, detail="Tu cuenta aún está pendiente de aprobación por el Administrador.")
+        
     response.set_cookie(key="auth_token", value=user.email, httponly=True)
     return {"ok": True}
 
@@ -256,12 +347,16 @@ def api_logout(response: Response):
 
 
 @app.get("/tables", response_model=list[schemas.AppTable], tags=["tables"])
-def api_get_tables(db: Session = Depends(database.get_db)):
-    return db.query(models.AppTable).all()
+def api_get_tables(request: Request, db: Session = Depends(database.get_db)):
+    user = get_current_user(request, db)
+    if not user: raise HTTPException(status_code=401, detail="No autorizado")
+    return db.query(models.AppTable).filter(models.AppTable.business_id == user.business_id).all()
 
 @app.get("/tables/{table_id}", response_model=schemas.AppTable, tags=["tables"])
-def api_get_table(table_id: int, db: Session = Depends(database.get_db)):
-    table = db.query(models.AppTable).filter(models.AppTable.id == table_id).first()
+def api_get_table(table_id: int, request: Request, db: Session = Depends(database.get_db)):
+    user = get_current_user(request, db)
+    if not user: raise HTTPException(status_code=401, detail="No autorizado")
+    table = db.query(models.AppTable).filter(models.AppTable.id == table_id, models.AppTable.business_id == user.business_id).first()
     if not table:
         raise HTTPException(status_code=404, detail="Table not found")
     # Ordenar campos por order_index, fallback a id
@@ -274,8 +369,8 @@ def api_create_table_full(payload: schemas.AppTableCreateFull, request: Request,
     if not user or user.role not in ["admin", "manager"]:
         raise HTTPException(status_code=403, detail="No tienes permisos para crear tablas.")
     
-    # Crear la tabla
-    new_table = models.AppTable(name=payload.name, description=payload.description)
+    # Crear la tabla ligada al negocio
+    new_table = models.AppTable(name=payload.name, description=payload.description, business_id=user.business_id)
     db.add(new_table)
     db.commit()
     db.refresh(new_table)
@@ -446,6 +541,7 @@ def api_update_record(record_id: int, record: schemas.AppRecordCreate, request: 
     
     # Audit trail
     audit = models.AppAudit(
+        business_id=user.business_id,
         table_id=db_record.table_id,
         record_id=db_record.id,
         employee_code=user.employee_code,
@@ -490,6 +586,7 @@ def api_inventory_movement(payload: schemas.MovementPayload, request: Request, d
     label_sujeto = "Proveedor" if payload.type == "Compra" else "Cliente"
     cedula_text = f" | Cédula/RUC: {payload.client_cedula}" if getattr(payload, "client_cedula", None) else ""
     audit = models.AppAudit(
+        business_id=user.business_id,
         table_id=first_item.table_id if first_item else None,
         record_id=None,
         employee_code=user.employee_code,
@@ -503,8 +600,10 @@ def api_inventory_movement(payload: schemas.MovementPayload, request: Request, d
     return {"ok": True, "processed": len(payload.items), "audit_id": audit.id}
 
 @app.get("/api/clients/suggest", tags=["inventory"])
-def api_clients_suggest(db: Session = Depends(database.get_db)):
-    t = db.query(models.AppTable).filter(models.AppTable.name.ilike('cliente%')).first()
+def api_clients_suggest(request: Request, db: Session = Depends(database.get_db)):
+    user = get_current_user(request, db)
+    if not user: return []
+    t = db.query(models.AppTable).filter(models.AppTable.business_id == user.business_id, models.AppTable.name.ilike('cliente%')).first()
     results = []
     if t:
         for r in t.records:
@@ -523,8 +622,10 @@ def api_clients_suggest(db: Session = Depends(database.get_db)):
     return unique_results
 
 @app.get("/api/suppliers/suggest", tags=["inventory"])
-def api_suppliers_suggest(db: Session = Depends(database.get_db)):
-    t = db.query(models.AppTable).filter(models.AppTable.name.ilike('proveedor%')).first()
+def api_suppliers_suggest(request: Request, db: Session = Depends(database.get_db)):
+    user = get_current_user(request, db)
+    if not user: return []
+    t = db.query(models.AppTable).filter(models.AppTable.business_id == user.business_id, models.AppTable.name.ilike('proveedor%')).first()
     names = []
     if t:
         for r in t.records:
@@ -588,7 +689,7 @@ def api_get_audits(request: Request, db: Session = Depends(database.get_db)):
     if not user:
         raise HTTPException(status_code=401, detail="No autorizado")
     
-    audits = db.query(models.AppAudit).order_by(models.AppAudit.id.desc()).limit(100).all()
+    audits = db.query(models.AppAudit).filter(models.AppAudit.business_id == user.business_id).order_by(models.AppAudit.id.desc()).limit(100).all()
     result = []
     for a in audits:
         result.append({
@@ -598,3 +699,74 @@ def api_get_audits(request: Request, db: Session = Depends(database.get_db)):
             "timestamp": a.timestamp.isoformat() if hasattr(a, 'timestamp') and a.timestamp else "N/A"
         })
     return result
+
+# --- Admin Personnel APIs ---
+from pydantic import BaseModel
+class ApproveUserPayload(BaseModel):
+    role: str
+
+@app.get("/api/users/pending", tags=["admin"])
+def api_get_pending_users(request: Request, db: Session = Depends(database.get_db)):
+    user = get_current_user(request, db)
+    if not user or user.role != "admin":
+        raise HTTPException(status_code=403, detail="No autorizado")
+    
+    pending = db.query(models.User).filter(
+        models.User.business_id == user.business_id,
+        models.User.status == "pending"
+    ).all()
+    
+    return [{"id": u.id, "full_name": u.full_name, "email": u.email, "cedula": u.cedula, "status": u.status} for u in pending]
+
+@app.get("/api/users/active", tags=["admin"])
+def api_get_active_users(request: Request, db: Session = Depends(database.get_db)):
+    user = get_current_user(request, db)
+    if not user or user.role not in ["admin", "manager"]:
+        raise HTTPException(status_code=403, detail="No autorizado")
+    
+    active = db.query(models.User).filter(
+        models.User.business_id == user.business_id,
+        models.User.status == "active"
+    ).all()
+    
+    return [{"id": u.id, "full_name": u.full_name, "email": u.email, "role": u.role, "employee_code": u.employee_code} for u in active]
+
+@app.post("/api/users/{user_id}/approve", tags=["admin"])
+def api_approve_user(user_id: int, payload: ApproveUserPayload, request: Request, db: Session = Depends(database.get_db)):
+    user = get_current_user(request, db)
+    if not user or user.role != "admin":
+        raise HTTPException(status_code=403, detail="No autorizado")
+        
+    target_user = db.query(models.User).filter(models.User.id == user_id, models.User.business_id == user.business_id).first()
+    if not target_user:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+        
+    target_user.status = "active"
+    target_user.role = payload.role
+    db.commit()
+    
+    success, error_msg = send_status_email(target_user.email, target_user.full_name, "approved")
+    
+    return {"ok": True, "email_sent": success, "email_error": error_msg if not success else None}
+
+@app.post("/api/users/{user_id}/reject", tags=["admin"])
+def api_reject_user(user_id: int, request: Request, db: Session = Depends(database.get_db)):
+    user = get_current_user(request, db)
+    if not user or user.role != "admin":
+        raise HTTPException(status_code=403, detail="No autorizado")
+        
+    target_user = db.query(models.User).filter(models.User.id == user_id, models.User.business_id == user.business_id).first()
+    if not target_user:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+        
+    target_status = target_user.status
+    target_email = target_user.email
+    target_name = target_user.full_name
+        
+    db.delete(target_user)
+    db.commit()
+    
+    action = "rejected" if target_status == "pending" else "deleted"
+    success, error_msg = send_status_email(target_email, target_name, action)
+    
+    return {"ok": True, "email_sent": success, "email_error": error_msg if not success else None}

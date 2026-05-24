@@ -1549,3 +1549,26 @@ input:checked+.slider:before {
         min-width: 750px !important;
     }
 }
+
+/* Sidebar Badge */
+.sidebar-badge {
+    background-color: var(--danger);
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 12px;
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    box-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
+    animation: pulseBadge 2s infinite;
+}
+
+@keyframes pulseBadge {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}

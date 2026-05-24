@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block content %}
+<header class="top-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+    <div>
+        <h1 style="display: flex; align-items: center; gap: 8px;"><i data-lucide="users" style="color: var(--primary); width: 32px; height: 32px;"></i> Gestión de Personal</h1>
+        <p class="text-muted">Administra las solicitudes y el acceso de tus empleados.</p>
+    </div>
+    <div style="text-align: right; background: var(--bg-main); padding: 12px 20px; border-radius: 12px; border: 1px solid var(--border-glass);">
+        <span style="font-size: 0.9rem; color: var(--text-muted);">Código de tu Negocio</span><br>
+        <strong style="color: var(--primary); font-size: 1.4rem; letter-spacing: 2px;">{{ user.business.code if user.business else 'N/A' }}</strong>
+    </div>
+</header>
+
+<div class="glass-panel" style="margin-bottom: 24px; border-radius: var(--radius-md); overflow: hidden;">
+    <h3 style="margin-top: 0; margin-bottom: 16px; border-bottom: 1px solid var(--border-glass); padding-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+        <i data-lucide="bell" style="color: var(--warning);"></i> Solicitudes Pendientes
+    </h3>
+    <div id="pending-users-container">
+        <!-- Contenido inyectado por JS -->
+        <p class="text-muted" style="font-size: 0.9rem;">Cargando solicitudes pendientes...</p>
+    </div>
+</div>
+
+<div class="glass-panel" style="margin-top: 80px; margin-bottom: 24px; border-radius: var(--radius-md); overflow: hidden;">
+    <h3 style="margin-top: 0; margin-bottom: 16px; border-bottom: 1px solid var(--border-glass); padding-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+        <i data-lucide="check-circle" style="color: var(--success);"></i> Personal Activo
+    </h3>
+    <div id="active-users-container">
+        <!-- Contenido inyectado por JS -->
+        <p class="text-muted" style="font-size: 0.9rem;">Cargando personal activo...</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/staff.js?v=1.0.8"></script>
+{% endblock %}

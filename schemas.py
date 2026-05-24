@@ -14,9 +14,10 @@ class UserBase(BaseModel):
             raise ValueError('El correo debe llevar "@"')
         return v
 
-class UserCreate(UserBase):
+class UserRegister(UserBase):
     password: str
-    role: str
+    business_code: str
+    business_name: Optional[str] = None
 
 class UserLogin(BaseModel):
     email: str
@@ -32,11 +33,33 @@ class EmailCheck(BaseModel):
             raise ValueError('El correo debe llevar "@"')
         return v
 
+class RegistrationCheck(BaseModel):
+    email: str
+    cedula: str
+
+    @field_validator('email', mode='before')
+    @classmethod
+    def validate_email(cls, v):
+        if not isinstance(v, str) or "@" not in v:
+            raise ValueError('El correo debe llevar "@"')
+        return v
+
 class UserResponse(UserBase):
     id: int
     role: str
     employee_code: Optional[str] = None
+    business_id: Optional[int] = None
+    status: str
 
+    class Config:
+        from_attributes = True
+
+class BusinessBase(BaseModel):
+    name: str
+    code: str
+
+class Business(BusinessBase):
+    id: int
     class Config:
         from_attributes = True
 

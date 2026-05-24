@@ -18,23 +18,36 @@
     </button>
     <div class="auth-container">
         <div class="auth-card glass-panel" style="width: 450px; position: relative;">
-            {% if user %}
-            <button onclick="window.location.href='/dashboard'" class="btn btn-secondary" style="position: absolute; top: 15px; left: 15px; padding: 6px 12px; font-size: 0.8rem; display: flex; align-items: center; gap: 6px;">
+            <button onclick="window.location.href='/'" class="btn btn-secondary" style="position: absolute; top: 15px; left: 15px; padding: 6px 12px; font-size: 0.8rem; display: flex; align-items: center; gap: 6px;">
                 <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i> Volver
             </button>
-            {% endif %}
-            <div class="auth-header" style="{% if user %}margin-top: 25px;{% endif %}">
-                <h2>{% if user %}Registrar Nuevo Usuario{% else %}Registro de Usuario{% endif %}</h2>
+            <div class="auth-header" style="margin-top: 25px;">
+                <h2 id="reg-title">Registro de Usuario</h2>
+                <p id="reg-subtitle" style="color: var(--text-muted); font-size: 0.9rem; margin-top: 8px;"></p>
             </div>
             
             <div id="reg-step-1">
+                <!-- Secciones exclusivas de Negocio (Dueño) -->
+                <div id="owner-fields" style="display: none;">
+                    <div class="form-group">
+                        <label>Nombre del Negocio</label>
+                        <input type="text" id="reg-business-name" class="input-neumorphic" placeholder="Ej: Supermercado XYZ" onkeypress="if(event.key === 'Enter') checkRegisterEmail()">
+                    </div>
+                </div>
+
                 <div class="form-group">
-                    <label>Nombre Completo</label>
-                    <input type="text" id="reg-name" class="input-neumorphic" placeholder="Juan Pérez">
+                    <label id="business-code-label">Código de Negocio</label>
+                    <input type="text" id="reg-business-code" class="input-neumorphic" placeholder="Ej: XYZ-2026" style="text-transform: uppercase;" onkeypress="if(event.key === 'Enter') checkRegisterEmail()">
+                    <small id="business-code-hint" style="color: var(--text-muted); font-size: 0.75rem; display: block; margin-top: 4px;"></small>
+                </div>
+
+                <div class="form-group" style="margin-top: 20px; border-top: 1px solid var(--border-color); padding-top: 15px;">
+                    <label>Tu Nombre Completo</label>
+                    <input type="text" id="reg-name" class="input-neumorphic" placeholder="Juan Pérez" onkeypress="if(event.key === 'Enter') checkRegisterEmail()">
                 </div>
                 <div class="form-group">
                     <label>Correo Electrónico</label>
-                    <input type="email" id="reg-email" class="input-neumorphic" placeholder="nombre@empresa.com">
+                    <input type="email" id="reg-email" class="input-neumorphic" placeholder="nombre@empresa.com" onkeypress="if(event.key === 'Enter') checkRegisterEmail()">
                 </div>
                 <div class="form-group">
                     <label>Tipo de Documento</label>
@@ -42,19 +55,10 @@
                         <label style="cursor: pointer;"><input type="radio" name="reg-cedula-type" value="cedula" checked onchange="updateRegisterCedulaLength()"> Cédula (10 dígitos)</label>
                         <label style="cursor: pointer;"><input type="radio" name="reg-cedula-type" value="ruc" onchange="updateRegisterCedulaLength()"> RUC (13 dígitos)</label>
                     </div>
-                    <input type="text" id="reg-cedula" class="input-neumorphic" placeholder="Sólo números..." maxlength="10" oninput="updateRegisterCedulaLength()">
+                    <input type="text" id="reg-cedula" class="input-neumorphic" placeholder="Sólo números..." maxlength="10" oninput="updateRegisterCedulaLength()" onkeypress="if(event.key === 'Enter') checkRegisterEmail()">
                     <small id="reg-cedula-error" style="color: var(--danger); display: none; font-size: 0.75rem; margin-top: 4px;">Debe tener exactamente 10 dígitos.</small>
                 </div>
-                <div class="form-group">
-                    <label>Rol (Temporal para pruebas)</label>
-                    <select id="reg-role" class="input-neumorphic">
-                        <option value="empleado">Empleado</option>
-                        {% if not user or user.role == 'admin' %}
-                        <option value="manager">Jefe / Manager</option>
-                        <option value="admin">Administrador</option>
-                        {% endif %}
-                    </select>
-                </div>
+                
                 <button class="btn btn-primary btn-block" style="margin-top:20px;" onclick="checkRegisterEmail()">Continuar</button>
             </div>
 
@@ -62,11 +66,11 @@
                 <p class="auth-subtitle">Ingresa una contraseña segura</p>
                 <div class="form-group">
                     <label>Contraseña</label>
-                    <input type="password" id="reg-pass" class="input-neumorphic" placeholder="••••••••">
+                    <input type="password" id="reg-pass" class="input-neumorphic" placeholder="••••••••" onkeypress="if(event.key === 'Enter') showConfirmPass()">
                 </div>
                 <button class="btn btn-primary btn-block" style="margin-top:20px;" onclick="showConfirmPass()">Siguiente</button>
                 <div class="auth-links" style="margin-top: 12px; text-align: center;">
-                    <button class="btn-link" onclick="backToRegStep(1)">Cambiar Email</button>
+                    <button class="btn-link" onclick="backToRegStep(1)">Atrás</button>
                 </div>
             </div>
 
@@ -74,7 +78,7 @@
                 <p class="auth-subtitle">Confirma tu contraseña</p>
                 <div class="form-group">
                     <label>Confirmar Contraseña</label>
-                    <input type="password" id="reg-confirm" class="input-neumorphic" placeholder="••••••••">
+                    <input type="password" id="reg-confirm" class="input-neumorphic" placeholder="••••••••" onkeypress="if(event.key === 'Enter') registerUser()">
                 </div>
                 <button class="btn btn-primary btn-block" style="margin-top:20px;" onclick="registerUser()">Crear Cuenta</button>
                 <div class="auth-links" style="margin-top: 12px; text-align: center;">
@@ -83,15 +87,36 @@
             </div>
 
             <div class="auth-footer" style="margin-top:24px;">
-                {% if not user %}
                 <p>¿Ya tienes una cuenta? <a href="/login">Inicia sesión</a></p>
-                {% else %}
-                <p>Estás registrando usuarios como <strong style="text-transform: capitalize;">{{ user.role }}</strong></p>
-                {% endif %}
             </div>
         </div>
     </div>
 
-    <script src="/static/js/app.js"></script>
+    <script>
+        // Set up the UI based on the URL parameter 'flow'
+        document.addEventListener('DOMContentLoaded', () => {
+            const params = new URLSearchParams(window.location.search);
+            const flow = params.get('flow');
+            
+            if (flow === 'owner') {
+                document.getElementById('reg-title').innerText = "Crear Mi Negocio";
+                document.getElementById('reg-subtitle').innerText = "Crea un espacio de trabajo y conviértete en Administrador.";
+                document.getElementById('owner-fields').style.display = "block";
+                document.getElementById('business-code-label').innerText = "Código de Negocio (Créalo ahora)";
+                document.getElementById('business-code-hint').innerText = "Inventa un código único. Tus empleados lo usarán para unirse a tu negocio.";
+                window.registerFlow = 'owner';
+            } else {
+                document.getElementById('reg-title').innerText = "Unirme a un Negocio";
+                document.getElementById('reg-subtitle').innerText = "Ingresa el código que te proporcionó el Administrador para solicitar acceso.";
+                document.getElementById('business-code-label').innerText = "Código de Negocio";
+                document.getElementById('business-code-hint').innerText = "El administrador de tu empresa debió darte este código.";
+                window.registerFlow = 'employee';
+            }
+        });
+    </script>
+    <!-- Contenedor de Toasts -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <script src="/static/js/app.js?v=1.0.6"></script>
 </body>
 </html>

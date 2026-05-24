@@ -96,3 +96,5 @@ function confirmTemplateCreation() {
     showToast('Esta funcionalidad se implementará pronto. Por ahora el diseño visual está listo.', 'info');
     document.getElementById('template-suggestion-panel').style.display = 'none';
 }
+
+
