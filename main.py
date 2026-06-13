@@ -220,11 +220,18 @@ async def audits_view(request: Request, q: str = None, tab: str = "active", limi
     audits = query.order_by(models.AppAudit.id.desc()).limit(limit).all()
     has_more = total_count > len(audits)
     
+    pending_count = db.query(models.AppAudit).filter(
+        models.AppAudit.business_id == user.business_id,
+        models.AppAudit.status == "pending_change"
+    ).count()
+    
     return templates.TemplateResponse("audits.html", {
         "request": request, 
         "user": user, 
         "audits": audits,
         "q": q or "",
+        "tab": tab,
+        "pending_count": pending_count,
         "limit": limit,
         "has_more": has_more,
         "total_count": total_count
@@ -348,6 +355,9 @@ def api_login(payload: schemas.UserLogin, response: Response, db: Session = Depe
     
     if user.status == "pending":
         raise HTTPException(status_code=403, detail="Tu cuenta aún está pendiente de aprobación por el Administrador.")
+        
+    if user.status == "fired":
+        raise HTTPException(status_code=403, detail="Tu cuenta ha sido desactivada por la administración. Por favor contacta al administrador.")
         
     response.set_cookie(key="auth_token", value=user.email, httponly=True)
     return {"ok": True}
