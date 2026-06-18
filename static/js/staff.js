@@ -94,7 +94,6 @@ async function loadPendingUsers() {
                     <div style="display: flex; gap: 8px; align-items: center;">
                         <select id="role-select-${u.id}" class="input-neumorphic" style="padding: 8px 12px; font-size: 0.9rem; height: auto; min-width: 130px; background: var(--secondary);">
                             <option value="empleado">Empleado</option>
-                            <option value="bodeguero">Bodeguero</option>
                             <option value="manager">Manager</option>
                         </select>
                         <button class="btn btn-primary" onclick="approveUser(${u.id}, this)">Aprobar</button>

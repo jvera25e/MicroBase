@@ -331,6 +331,9 @@ function renderSalesChart(labels, datasets) {
     if (salesChartInstance) {
         salesChartInstance.data.labels = labels;
         salesChartInstance.data.datasets = styledDatasets;
+        if (salesChartInstance.options.scales.y.title) {
+            salesChartInstance.options.scales.y.title.text = (selectedProducts.length > 0) ? 'Cantidad Vendida (Unidades)' : 'Total Ventas (Dólares USD)';
+        }
         salesChartInstance.update('none'); // Update sin animaciones repetidas para que sea fluido
     } else {
         salesChartInstance = new Chart(ctx, {
@@ -380,6 +383,17 @@ function renderSalesChart(labels, datasets) {
                 },
                 scales: {
                     x: {
+                        title: {
+                            display: true,
+                            text: 'Fechas',
+                            color: '#cbd5e1',
+                            font: {
+                                family: 'Inter',
+                                size: 18,
+                                weight: '600'
+                            },
+                            padding: { top: 10, bottom: 0 }
+                        },
                         grid: {
                             color: 'rgba(51, 65, 85, 0.2)',
                             drawBorder: false
@@ -388,11 +402,22 @@ function renderSalesChart(labels, datasets) {
                             color: '#94a3b8',
                             font: {
                                 family: 'Inter',
-                                size: 11
+                                size: 18
                             }
                         }
                     },
                     y: {
+                        title: {
+                            display: true,
+                            text: (selectedProducts.length > 0) ? 'Cantidad Vendida (Unidades)' : 'Total Ventas (Dólares USD)',
+                            color: '#cbd5e1',
+                            font: {
+                                family: 'Inter',
+                                size: 18,
+                                weight: '600'
+                            },
+                            padding: { top: 0, bottom: 10 }
+                        },
                         grid: {
                             color: 'rgba(51, 65, 85, 0.2)',
                             drawBorder: false
@@ -401,7 +426,7 @@ function renderSalesChart(labels, datasets) {
                             color: '#94a3b8',
                             font: {
                                 family: 'Inter',
-                                size: 11
+                                size: 18
                             }
                         }
                     }

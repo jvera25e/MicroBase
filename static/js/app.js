@@ -88,7 +88,7 @@ function renderTable(fields, records) {
         let role = typeof currentUserRole !== 'undefined' ? currentUserRole : 'empleado';
         let actionHtml = '';
         if (role === 'admin') {
-            actionHtml = `<button class="delete-row-btn" onclick="deleteColumn(${field.id})" style="padding: 0; outline: none; margin-left: 8px;">
+            actionHtml = `<button class="delete-row-btn admin-edit-element" onclick="deleteColumn(${field.id})" style="padding: 0; outline: none; margin-left: 8px;">
                 <i data-lucide="x" style="width: 14px; height: 14px;"></i>
             </button>`;
         }
@@ -252,17 +252,17 @@ function renderTable(fields, records) {
         let role = typeof currentUserRole !== 'undefined' ? currentUserRole : 'empleado';
         let deleteRowHtml = '';
         if (['admin', 'manager'].includes(role)) {
-            deleteRowHtml = `<button class="delete-row-btn" onclick="deleteRow(${record.id})" title="Eliminar Fila"><i data-lucide="trash-2"></i></button>`;
+            deleteRowHtml = `<button class="delete-row-btn admin-edit-element" onclick="deleteRow(${record.id})" title="Eliminar Fila"><i data-lucide="trash-2"></i></button>`;
         }
 
         let actionBtnHtml = `
-            <button class="btn btn-primary action-btn save-btn" onclick="saveRow(${record.id})" style="padding: 6px 12px; margin-right: 8px; font-size: 0.8rem;" title="Guardar Fila">
+            <button class="btn btn-primary action-btn save-btn admin-edit-element" onclick="saveRow(${record.id})" style="padding: 6px 12px; margin-right: 8px; font-size: 0.8rem;" title="Guardar Fila">
                 <i data-lucide="save" style="width: 14px;"></i> Guardar
             </button>
         `;
         if (!isNewRow) {
             actionBtnHtml = `
-                <button class="btn btn-secondary action-btn edit-btn" onclick="enableEditRow(${record.id}, this)" style="padding: 6px 12px; margin-right: 8px; font-size: 0.8rem;" title="Editar Fila">
+                <button class="btn btn-secondary action-btn edit-btn admin-edit-element" onclick="enableEditRow(${record.id}, this)" style="padding: 6px 12px; margin-right: 8px; font-size: 0.8rem;" title="Editar Fila">
                     <i data-lucide="edit" style="width: 14px;"></i> Editar
                 </button>
             `;
@@ -333,7 +333,7 @@ window.enableEditRow = function (recordId, btn) {
     if (inputs.length > 0) inputs[0].focus();
 
     btn.outerHTML = `
-        <button class="btn btn-primary action-btn save-btn" onclick="saveRow(${recordId})" style="padding: 6px 12px; margin-right: 8px; font-size: 0.8rem;" title="Guardar Fila">
+        <button class="btn btn-primary action-btn save-btn admin-edit-element" onclick="saveRow(${recordId})" style="padding: 6px 12px; margin-right: 8px; font-size: 0.8rem;" title="Guardar Fila">
             <i data-lucide="save" style="width: 14px;"></i> Guardar
         </button>
     `;
@@ -670,7 +670,7 @@ function openManageColumnsModal() {
             </div>
         `;
 
-        // ââ Drag & Drop (solo reordena en el DOM, no llama al backend aún) ââ
+        // Drag & Drop (solo reordena en el DOM, no llama al backend aún)
         if (!isAuto) {
             card.addEventListener('dragstart', (e) => {
                 dragSrc = card;
@@ -1772,18 +1772,18 @@ document.addEventListener('DOMContentLoaded', async () => {
 // ---- Lógica de Modificación y Anulación de Facturas (Opción 3) ----
 
 // Abre el modal para que el empleado solicite la corrección
-window.openRequestModal = async function(auditId) {
+window.openRequestModal = async function (auditId) {
     try {
         const res = await fetch(`/api/audits/${auditId}`);
         if (!res.ok) throw new Error("No se pudo obtener la información de la factura.");
-        
+
         const audit = await res.json();
         document.getElementById('rc-audit-id').value = auditId;
         document.getElementById('rc-notes').value = '';
-        
+
         const tbody = document.getElementById('rc-items-body');
         tbody.innerHTML = '';
-        
+
         const items = audit.details?.items || [];
         items.forEach(item => {
             const tr = document.createElement('tr');
@@ -1799,7 +1799,7 @@ window.openRequestModal = async function(auditId) {
             `;
             tbody.appendChild(tr);
         });
-        
+
         document.getElementById('request-correction-modal').classList.add('active');
         lucide.createIcons();
     } catch (e) {
@@ -1809,11 +1809,11 @@ window.openRequestModal = async function(auditId) {
 };
 
 // Envía la solicitud de corrección del cajero
-window.submitCorrectionRequest = async function(e) {
+window.submitCorrectionRequest = async function (e) {
     e.preventDefault();
     const auditId = document.getElementById('rc-audit-id').value;
     const notes = document.getElementById('rc-notes').value.trim();
-    
+
     const itemRows = document.querySelectorAll('#rc-items-body tr');
     const items = [];
     itemRows.forEach(row => {
@@ -1822,19 +1822,19 @@ window.submitCorrectionRequest = async function(e) {
         const quantityChange = parseFloat(qtyInput.value) || 0.0;
         items.push({ record_id: recordId, quantity_change: quantityChange });
     });
-    
+
     const btn = document.getElementById('btn-submit-rc');
     btn.disabled = true;
     btn.innerHTML = '<i data-lucide="loader" class="spin"></i> Enviando...';
     lucide.createIcons();
-    
+
     try {
         const res = await fetch(`/api/audits/${auditId}/request-modification`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ notes, items })
         });
-        
+
         if (res.ok) {
             showToast("Solicitud de corrección enviada con éxito.", "success");
             document.getElementById('request-correction-modal').classList.remove('active');
@@ -1856,16 +1856,16 @@ window.submitCorrectionRequest = async function(e) {
 };
 
 // Abre el modal para que el Admin revise la solicitud de cambio
-window.openResolveModal = async function(auditId) {
+window.openResolveModal = async function (auditId) {
     try {
         const res = await fetch(`/api/audits/${auditId}`);
         if (!res.ok) throw new Error("No se pudo obtener la información.");
-        
+
         const audit = await res.json();
         document.getElementById('resolve-audit-id').value = auditId;
         document.getElementById('resolve-operator-code').innerText = audit.employee_code || 'N/A';
         document.getElementById('resolve-justification').innerText = audit.modification_notes || 'Sin justificación';
-        
+
         // Cargar Original
         const origBody = document.getElementById('resolve-orig-body');
         origBody.innerHTML = '';
@@ -1880,7 +1880,7 @@ window.openResolveModal = async function(auditId) {
             origBody.appendChild(tr);
         });
         document.getElementById('resolve-orig-total').innerText = `$${(audit.details?.total || 0).toFixed(2)}`;
-        
+
         // Cargar Propuesto
         const propBody = document.getElementById('resolve-prop-body');
         propBody.innerHTML = '';
@@ -1895,7 +1895,7 @@ window.openResolveModal = async function(auditId) {
             propBody.appendChild(tr);
         });
         document.getElementById('resolve-prop-total').innerText = `$${(audit.proposed_details?.total || 0).toFixed(2)}`;
-        
+
         document.getElementById('resolve-correction-modal').classList.add('active');
         lucide.createIcons();
     } catch (e) {
@@ -1905,23 +1905,23 @@ window.openResolveModal = async function(auditId) {
 };
 
 // Resuelve la solicitud (Aprobar, Rechazar, Anular)
-window.resolveRequest = async function(action) {
+window.resolveRequest = async function (action) {
     const auditId = document.getElementById('resolve-audit-id').value;
-    
+
     let confirmMsg = "¿Estás seguro de rechazar esta solicitud?";
     if (action === 'approve') confirmMsg = "¿Estás seguro de APROBAR y aplicar los cambios? Esto modificará el stock automáticamente.";
     if (action === 'annul') confirmMsg = "¿Estás seguro de ANULAR completamente esta factura? El stock original se revertirá al inventario.";
-    
+
     const ok = await showConfirmModal(confirmMsg);
     if (!ok) return;
-    
+
     try {
         const res = await fetch(`/api/audits/${auditId}/resolve-modification`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ action })
         });
-        
+
         if (res.ok) {
             showToast("Solicitud procesada con éxito.", "success");
             document.getElementById('resolve-correction-modal').classList.remove('active');
@@ -1937,7 +1937,7 @@ window.resolveRequest = async function(action) {
 };
 
 // Abre el modal para anulación directa de factura (Admin)
-window.openDirectAnnulModal = function(auditId) {
+window.openDirectAnnulModal = function (auditId) {
     document.getElementById('da-audit-id').value = auditId;
     document.getElementById('da-notes').value = '';
     document.getElementById('direct-annul-modal').classList.add('active');
@@ -1945,21 +1945,21 @@ window.openDirectAnnulModal = function(auditId) {
 };
 
 // Procesa la anulación directa
-window.submitDirectAnnul = async function(e) {
+window.submitDirectAnnul = async function (e) {
     e.preventDefault();
     const auditId = document.getElementById('da-audit-id').value;
     const notes = document.getElementById('da-notes').value.trim();
-    
+
     const ok = await showConfirmModal("¿Estás seguro de anular esta factura directamente? Se revertirá completamente el stock de los productos.");
     if (!ok) return;
-    
+
     try {
         const res = await fetch(`/api/audits/${auditId}/direct-annul`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ notes })
         });
-        
+
         if (res.ok) {
             showToast("Factura anulada con éxito.", "success");
             document.getElementById('direct-annul-modal').classList.remove('active');

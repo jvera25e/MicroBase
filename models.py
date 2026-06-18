@@ -24,7 +24,7 @@ class User(Base):
     email = Column(String, unique=True, index=True)
     hashed_password = Column(String)
     notifications = Column(Boolean, default=True)
-    role = Column(String, default="empleado") # admin, manager, empleado, bodeguero
+    role = Column(String, default="empleado") # admin, manager, empleado
     employee_code = Column(String, unique=True, index=True)
     cedula = Column(String, unique=True, index=True, nullable=True)
     status = Column(String, default="pending") # active, pending

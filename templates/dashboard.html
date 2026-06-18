@@ -3,6 +3,7 @@
 {% block title %}MicroBase - Dashboard{% endblock %}
 
 {% block content %}
+<div class="dashboard-scroll-container" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; min-height: 0; margin: -32px; padding: 32px;">
 {% if user.role == 'admin' %}
     {% if not setup_completed %}
         <!-- PANTALLA 1: Configuración Inicial / Plantillas (Solo Admin y setup no completado) -->
@@ -338,6 +339,7 @@
         </div>
     </div>
 {% endif %}
+</div>
 {% endblock %}
 
 {% block scripts %}

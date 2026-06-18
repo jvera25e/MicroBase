@@ -590,10 +590,8 @@ def api_inventory_movement(payload: schemas.MovementPayload, request: Request, d
     if not user:
         raise HTTPException(status_code=401, detail="No autorizado")
 
-    # RBAC para el Cajero y Bodeguero
-    if payload.type == "Venta" and user.role == 'bodeguero':
-        raise HTTPException(status_code=403, detail="Bodegueros no pueden procesar salidas de venta")
-    if payload.type == "Compra" and user.role not in ['admin', 'manager', 'bodeguero']:
+    # RBAC para el Cajero
+    if payload.type == "Compra" and user.role not in ['admin', 'manager']:
         raise HTTPException(status_code=403, detail="Los cajeros no tienen permiso para inyectar stock")
 
     for item in payload.items:

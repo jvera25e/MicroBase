@@ -277,6 +277,11 @@ body {
     .sidebar.collapsed .sidebar-bottom-actions {
         flex-direction: column;
     }
+
+    .sidebar.collapsed .sidebar-edit-mode-container {
+        justify-content: center !important;
+        padding: 0 !important;
+    }
 }
 
 .sidebar-toggle-btn {
@@ -1572,3 +1577,22 @@ input:checked+.slider:before {
     50% { transform: scale(1.1); }
     100% { transform: scale(1); }
 }
+
+/* Modo Edicion (Admin) */
+.admin-edit-element {
+    display: none !important;
+}
+
+body.edit-mode-active .admin-edit-element {
+    display: inline-flex !important;
+}
+
+body.edit-mode-active td .admin-edit-element {
+    display: inline-block !important; /* For buttons inside table cells */
+}
+
+body.edit-mode-active .welcome-screen .admin-edit-element {
+    display: inline-flex !important; /* For the "Crear Mi Propia Tabla" button */
+}
+
+

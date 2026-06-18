@@ -12,13 +12,14 @@
     <!-- Lucide Icons (local - para compatibilidad con Brave / sin internet) -->
     <script src="/static/js/lucide.min.js"></script>
     <!-- Custom Styles -->
-    <link rel="stylesheet" href="/static/css/style.css?v=1.0.9">
+    <link rel="stylesheet" href="/static/css/style.css?v=1.1.2">
 </head>
 
 <body class="dark-theme">
     <script>
         if (localStorage.getItem('theme') === 'light') document.body.classList.remove('dark-theme');
         else document.body.classList.add('dark-theme');
+        if (localStorage.getItem('editMode') === 'true') document.body.classList.add('edit-mode-active');
     </script>
     <div class="sidebar-overlay" onclick="closeSidebar()"></div>
     <div class="app-container">
@@ -105,13 +106,10 @@
                     {% for table in tables %}
                     {% set table_lower = table.name | lower %}
 
-                    {# Regla RBAC: Empleados oculto para Cajeros/Bodegueros/Gerentes #}
+                    {# Regla RBAC: Empleados oculto para Cajeros/Gerentes #}
                     {% set hide_empleados = (user.role != 'admin' and 'empleado' in table_lower) %}
 
-                    {# Regla RBAC: Clientes oculto para Bodegueros #}
-                    {% set hide_clientes = (user.role == 'bodeguero' and 'cliente' in table_lower) %}
-
-                    {% if not hide_empleados and not hide_clientes %}
+                    {% if not hide_empleados %}
                     <li class="table-item">
                         <a href="#" class="nav-link" data-table-id="{{ table.id }}"
                             onclick="loadTable('{{ table.id }}', event)" title="{{ table.name }}">
@@ -135,15 +133,26 @@
                             user else 'Usuario' }}</div>
                     </div>
                 </div>
-                <div class="sidebar-bottom-actions" style="display: flex; gap: 8px;">
-                    <button class="btn btn-secondary" style="flex: 1; justify-content: center; font-size: 0.8rem;"
-                        onclick="toggleTheme()" title="Modo Claro / Oscuro">
-                        <i data-lucide="moon" style="width: 16px;"></i> <span class="btn-text-label">Tema</span>
-                    </button>
-                    <button class="btn btn-secondary" style="flex: 1; justify-content: center; font-size: 0.8rem;"
-                        onclick="logout()" title="Salir">
-                        <i data-lucide="log-out" style="width: 16px;"></i> <span class="btn-text-label">Salir</span>
-                    </button>
+                <div class="sidebar-bottom-actions" style="display: flex; flex-direction: column; gap: 8px;">
+                    {% if user.role == 'admin' %}
+                    <div class="sidebar-edit-mode-container" style="display: flex; justify-content: space-between; align-items: center; padding: 0 4px; margin-bottom: 4px;">
+                        <span class="btn-text-label" style="font-size: 0.8rem; color: var(--text-main); font-weight: 500;">Modo Edición</span>
+                        <label class="switch" title="Activar Modo Edición">
+                            <input type="checkbox" id="edit-mode-toggle" onchange="toggleEditMode()">
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                    {% endif %}
+                    <div style="display: flex; gap: 8px;">
+                        <button class="btn btn-secondary" style="flex: 1; justify-content: center; font-size: 0.8rem;"
+                            onclick="toggleTheme()" title="Modo Claro / Oscuro">
+                            <i data-lucide="moon" style="width: 16px;"></i> <span class="btn-text-label">Tema</span>
+                        </button>
+                        <button class="btn btn-secondary" style="flex: 1; justify-content: center; font-size: 0.8rem;"
+                            onclick="logout()" title="Salir">
+                            <i data-lucide="log-out" style="width: 16px;"></i> <span class="btn-text-label">Salir</span>
+                        </button>
+                    </div>
                 </div>
             </div>
         </aside>
@@ -392,7 +401,26 @@
     <!-- Contenedor de Toasts -->
     <div id="toast-container" class="toast-container"></div>
 
-    <script src="/static/js/app.js?v=1.0.7"></script>
+    <script>
+        function toggleEditMode() {
+            const isEdit = document.getElementById('edit-mode-toggle').checked;
+            if (isEdit) {
+                document.body.classList.add('edit-mode-active');
+                localStorage.setItem('editMode', 'true');
+            } else {
+                document.body.classList.remove('edit-mode-active');
+                localStorage.setItem('editMode', 'false');
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            const toggle = document.getElementById('edit-mode-toggle');
+            if (toggle && localStorage.getItem('editMode') === 'true') {
+                toggle.checked = true;
+            }
+        });
+    </script>
+    <script src="/static/js/app.js?v=1.0.8"></script>
     <script>
         lucide.createIcons();
     </script>
