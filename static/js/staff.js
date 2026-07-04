@@ -143,11 +143,20 @@ async function loadActiveUsers() {
         users.forEach(u => {
             let btnRechazar = u.role === 'admin' ? '' : `<button class="btn-link" style="color: var(--danger); padding: 4px; border: none; background: transparent; cursor: pointer;" onclick="rejectUser(${u.id}, this, false)" title="Dar de Baja (Despedir)"><i data-lucide="trash-2" style="width: 18px; height: 18px;"></i></button>`;
             
+            let emailText = u.email;
+            if (u.email_error) {
+                emailText += `
+                    <button class="btn-link" style="color: var(--warning); padding: 2px; border: none; background: transparent; cursor: pointer; display: inline-flex; align-items: center; vertical-align: middle; margin-left: 6px;" onclick="resendUserEmail(${u.id}, this)" title="Fallo de correo. Clic para reenviar aviso de aprobación.">
+                        <i data-lucide="alert-triangle" style="width: 16px; height: 16px;"></i>
+                    </button>
+                `;
+            }
+
             html += `
                 <tr>
                     <td style="font-family: monospace; color: var(--primary);">${u.employee_code || '-'}</td>
                     <td>${u.full_name}</td>
-                    <td>${u.email}</td>
+                    <td>${emailText}</td>
                     <td style="text-transform: capitalize;">${u.role}</td>
                     <td style="text-align: center;">${btnRechazar}</td>
                 </tr>
@@ -193,11 +202,20 @@ async function loadInactiveUsers() {
         `;
         
         users.forEach(u => {
+            let emailText = u.email;
+            if (u.email_error) {
+                emailText += `
+                    <button class="btn-link" style="color: var(--warning); padding: 2px; border: none; background: transparent; cursor: pointer; display: inline-flex; align-items: center; vertical-align: middle; margin-left: 6px;" onclick="resendUserEmail(${u.id}, this)" title="Fallo de correo. Clic para reenviar aviso de despido/baja.">
+                        <i data-lucide="alert-triangle" style="width: 16px; height: 16px;"></i>
+                    </button>
+                `;
+            }
+
             html += `
                 <tr style="opacity: 0.75;">
                     <td style="font-family: monospace; color: var(--text-muted);">${u.employee_code || '-'}</td>
                     <td>${u.full_name} <span class="badge" style="background: rgba(239, 68, 68, 0.12); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); font-size: 0.7rem; padding: 2px 6px; margin-left: 6px;">Baja</span></td>
-                    <td>${u.email}</td>
+                    <td>${emailText}</td>
                     <td style="text-transform: capitalize;">${u.role}</td>
                     <td style="text-align: center;">
                         <div style="display: flex; gap: 8px; justify-content: center; align-items: center;">
@@ -330,3 +348,38 @@ async function rehireUser(id, btn) {
         btn.disabled = false;
     }
 }
+
+window.resendUserEmail = async function(id, btn) {
+    const originalContent = btn.innerHTML;
+    btn.innerHTML = '<i data-lucide="loader" class="spin" style="width:14px;height:14px;"></i>';
+    btn.disabled = true;
+    lucide.createIcons();
+    
+    try {
+        const res = await fetch(`/api/users/${id}/resend-email`, { method: 'POST' });
+        const data = await res.json();
+        
+        if (res.ok) {
+            if (data.email_sent) {
+                showToast("Correo reenviado con éxito.", "success");
+                btn.remove();
+            } else {
+                showToast("Fallo al reenviar el correo: " + (data.email_error || "error desconocido"), "error");
+                btn.innerHTML = originalContent;
+                btn.disabled = false;
+                lucide.createIcons();
+            }
+        } else {
+            showToast("Error al reenviar el correo.", "error");
+            btn.innerHTML = originalContent;
+            btn.disabled = false;
+            lucide.createIcons();
+        }
+    } catch (e) {
+        console.error(e);
+        showToast("Error de conexión.", "error");
+        btn.innerHTML = originalContent;
+        btn.disabled = false;
+        lucide.createIcons();
+    }
+};

@@ -28,6 +28,7 @@ class User(Base):
     employee_code = Column(String, unique=True, index=True)
     cedula = Column(String, unique=True, index=True, nullable=True)
     status = Column(String, default="pending") # active, pending
+    email_error = Column(Boolean, default=False, server_default="false")
 
     business = relationship("Business", back_populates="users")
 

@@ -758,7 +758,7 @@ def api_get_active_users(request: Request, db: Session = Depends(database.get_db
         models.User.status == "active"
     ).all()
     
-    return [{"id": u.id, "full_name": u.full_name, "email": u.email, "role": u.role, "employee_code": u.employee_code} for u in active]
+    return [{"id": u.id, "full_name": u.full_name, "email": u.email, "role": u.role, "employee_code": u.employee_code, "email_error": getattr(u, "email_error", False)} for u in active]
 
 @app.post("/api/users/{user_id}/approve", tags=["admin"])
 def api_approve_user(user_id: int, payload: ApproveUserPayload, request: Request, db: Session = Depends(database.get_db)):
@@ -775,6 +775,8 @@ def api_approve_user(user_id: int, payload: ApproveUserPayload, request: Request
     db.commit()
     
     success, error_msg = send_status_email(target_user.email, target_user.full_name, "approved")
+    target_user.email_error = not success
+    db.commit()
     
     return {"ok": True, "email_sent": success, "email_error": error_msg if not success else None}
 
@@ -795,13 +797,15 @@ def api_reject_user(user_id: int, request: Request, db: Session = Depends(databa
     if target_status == "pending":
         db.delete(target_user)
         action = "rejected"
+        db.commit()
+        success, error_msg = send_status_email(target_email, target_name, action)
     else:
         target_user.status = "fired"
         action = "deleted"
-        
-    db.commit()
-    
-    success, error_msg = send_status_email(target_email, target_name, action)
+        db.commit()
+        success, error_msg = send_status_email(target_email, target_name, action)
+        target_user.email_error = not success
+        db.commit()
     
     return {"ok": True, "email_sent": success, "email_error": error_msg if not success else None}
 
@@ -1019,7 +1023,7 @@ def api_get_inactive_users(request: Request, db: Session = Depends(database.get_
         models.User.status == "fired"
     ).all()
     
-    return [{"id": u.id, "full_name": u.full_name, "email": u.email, "role": u.role, "employee_code": u.employee_code} for u in inactive]
+    return [{"id": u.id, "full_name": u.full_name, "email": u.email, "role": u.role, "employee_code": u.employee_code, "email_error": getattr(u, "email_error", False)} for u in inactive]
 
 @app.post("/api/users/{user_id}/rehire", tags=["admin"])
 def api_rehire_user(user_id: int, request: Request, db: Session = Depends(database.get_db)):
@@ -1038,6 +1042,31 @@ def api_rehire_user(user_id: int, request: Request, db: Session = Depends(databa
     db.commit()
     
     success, error_msg = send_status_email(target_user.email, target_user.full_name, "approved")
+    target_user.email_error = not success
+    db.commit()
+    
+    return {"ok": True, "email_sent": success, "email_error": error_msg if not success else None}
+
+@app.post("/api/users/{user_id}/resend-email", tags=["admin"])
+def api_resend_email(user_id: int, request: Request, db: Session = Depends(database.get_db)):
+    user = get_current_user(request, db)
+    if not user or user.role != "admin":
+        raise HTTPException(status_code=403, detail="No autorizado")
+        
+    target_user = db.query(models.User).filter(models.User.id == user_id, models.User.business_id == user.business_id).first()
+    if not target_user:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+        
+    if target_user.status == "active":
+        action = "approved"
+    elif target_user.status == "fired":
+        action = "deleted"
+    else:
+        raise HTTPException(status_code=400, detail="El usuario no requiere este correo de aviso")
+        
+    success, error_msg = send_status_email(target_user.email, target_user.full_name, action)
+    target_user.email_error = not success
+    db.commit()
     
     return {"ok": True, "email_sent": success, "email_error": error_msg if not success else None}
 

@@ -38,7 +38,7 @@ El desarrollo de esta propuesta tecnológica se basa en el siguiente ecosistema:
 *   **Renderizado de Vistas:** Jinja2.
 *   **Frontend:** HTML5, CSS3 Vanilla y JavaScript Vanilla, aplicando principios rigurosos de usabilidad y diseño (Glassmorphism) para facilitar la adopción por parte del usuario final.
 
-## ⚙️ Instalación y Configuración
+## ⚙️ Instalación y Configuración   
 
 ### 1. Preparar Entorno
 ```bash
@@ -67,4 +67,4 @@ Navega a `http://127.0.0.1:8000/` para comenzar.
 
 ---
 *Desarrollado como Proyecto de Titulación - Ingeniería en Sistemas de la Información*
-**Autores:** Castillo Mina Williams Johao & Molina Balseca Geanella Valentina (2025)
+**Autores:** Castillo Mina Williams Johao & Molina Balseca Geanella Valentina (2026)
