@@ -587,7 +587,6 @@ def api_update_record(record_id: int, record: schemas.AppRecordCreate, request: 
     if not db_record:
         raise HTTPException(status_code=404, detail="Record not found")
     db_record.data = record.data
-    from sqlalchemy.orm.attributes import flag_modified
     flag_modified(db_record, "data")
     
     # Audit trail
