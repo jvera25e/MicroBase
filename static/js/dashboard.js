@@ -1,4 +1,10 @@
 const templatesConfig = {
+    'blank': {
+        title: 'Empezar desde 0',
+        tables: [
+            { icon: 'package', name: 'Inventario', desc: 'Catálogo de productos inicial.', cols: ['Nombre', 'Marca', 'COD', 'Unidad de Venta', 'Precio por Unidad', 'Cantidad'] }
+        ]
+    },
     'restaurant': {
         title: 'Restaurante / Comida',
         tables: [
@@ -31,6 +37,41 @@ const templatesConfig = {
             { icon: 'package', name: 'Inventario', desc: 'Catálogo de bebidas y stock.', cols: ['Nombre', 'Marca', 'COD', 'Unidad de Venta', 'Precio por Unidad', 'Cantidad'] },
             { icon: 'users', name: 'Clientes', desc: 'Compradores frecuentes.', cols: ['Nombre', 'Edad', 'WhatsApp'] },
             { icon: 'truck', name: 'Proveedores', desc: 'Distribuidores de licores.', cols: ['Marca', 'Proveedor', 'Pedido Mín.'] }
+        ]
+    },
+    'pharmacy': {
+        title: 'Farmacia / Botica',
+        tables: [
+            { icon: 'package', name: 'Inventario', desc: 'Gestión de medicamentos.', cols: ['Nombre', 'Laboratorio', 'COD', 'Principio Activo', 'Precio', 'Cantidad'] },
+            { icon: 'truck', name: 'Proveedores', desc: 'Distribuidores farmacéuticos.', cols: ['Distribuidor', 'Contacto', 'WhatsApp'] }
+        ]
+    },
+    'vet': {
+        title: 'Veterinaria / Pet Shop',
+        tables: [
+            { icon: 'heart', name: 'Pacientes', desc: 'Registro de mascotas y atención.', cols: ['Nombre Mascota', 'Especie', 'Raza', 'ID', 'Propietario', 'Última Cita'] },
+            { icon: 'package', name: 'Inventario', desc: 'Medicamentos y productos de Pet Shop.', cols: ['Nombre', 'Marca', 'COD', 'Unidad de Venta', 'Precio por Unidad', 'Cantidad'] }
+        ]
+    },
+    'hardware': {
+        title: 'Ferretería',
+        tables: [
+            { icon: 'package', name: 'Inventario', desc: 'Gestión de herramientas y materiales.', cols: ['Producto', 'Categoría', 'COD', 'Marca', 'Precio', 'Stock'] },
+            { icon: 'truck', name: 'Proveedores', desc: 'Distribuidores de ferretería.', cols: ['Distribuidora', 'Vendedor', 'Contacto'] }
+        ]
+    },
+    'salon': {
+        title: 'Salón de Belleza / Spa',
+        tables: [
+            { icon: 'scissors', name: 'Servicios', desc: 'Catálogo de servicios de belleza.', cols: ['Servicio', 'Categoría', 'Costo', 'Duración (min)'] },
+            { icon: 'users', name: 'Clientes', desc: 'Directorio y preferencias de clientes.', cols: ['Nombre', 'WhatsApp', 'Notas'] }
+        ]
+    },
+    'mechanic': {
+        title: 'Taller Mecánico',
+        tables: [
+            { icon: 'wrench', name: 'Servicios', desc: 'Mantenimientos y reparaciones.', cols: ['Servicio', 'Categoría', 'Costo'] },
+            { icon: 'package', name: 'Repuestos', desc: 'Inventario de autopartes.', cols: ['Repuesto', 'COD', 'Marca', 'Costo Unitario', 'Cantidad'] }
         ]
     }
 };
@@ -118,6 +159,7 @@ function confirmTemplate() {
     })
     .then(data => {
         showToast('Plantilla configurada correctamente', 'success');
+        localStorage.setItem('showEditorIntro', 'true');
         setTimeout(() => {
             window.location.reload();
         }, 1000);
@@ -415,6 +457,7 @@ function renderSalesChart(labels, datasets) {
                             },
                             padding: { top: 0, bottom: 10 }
                         },
+                        min: 0,
                         grid: {
                             color: 'rgba(51, 65, 85, 0.2)',
                             drawBorder: false

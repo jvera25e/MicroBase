@@ -64,10 +64,16 @@
                         </a>
                     </li>
                     <li>
+                        {% if user.role == 'admin' and user.business and not user.business.setup_completed %}
+                        <a href="#" class="nav-link" title="Mis Tablas" onclick="showToast('Configuración Pendiente: Para acceder a Mis Tablas, primero debes seleccionar una plantilla o elegir \'Empezar desde 0\' en el Dashboard.', 'warning'); return false;">
+                            <i data-lucide="table"></i> <span class="table-name-text">Mis Tablas</span>
+                        </a>
+                        {% else %}
                         <a href="/tables-view"
                             class="nav-link {% if request.url.path == '/tables-view' %}active{% endif %}" title="Mis Tablas">
                             <i data-lucide="table"></i> <span class="table-name-text">Mis Tablas</span>
                         </a>
+                        {% endif %}
                     </li>
                     <li>
                         <a href="/audits-view"
@@ -401,6 +407,33 @@
     <!-- Contenedor de Toasts -->
     <div id="toast-container" class="toast-container"></div>
 
+    <!-- Modal de Introducción al Modo Edición -->
+    <div id="editor-intro-modal" class="modal-overlay">
+        <div class="modal" style="max-width: 550px; width: 95%; display: flex; flex-direction: column;">
+            <div class="modal-header" style="border-bottom: 1px solid var(--border-glass); padding-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
+                <h2 style="display: flex; align-items: center; gap: 8px; color: var(--primary); font-size: 1.35rem; margin: 0;"><i data-lucide="info"></i> ¡Bienvenido al Modo Edición!</h2>
+                <button class="close-btn" onclick="closeEditorIntroModal()" style="background: transparent; border: none; color: white; cursor: pointer;">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="modal-body" style="padding-top: 16px; font-size: 0.95rem; line-height: 1.6; color: var(--text-main);">
+                <p>Tu plantilla se ha configurado con éxito. Ahora tienes acceso a herramientas avanzadas no-code a través del <strong>Modo Edición</strong>.</p>
+                <div style="background: rgba(59, 130, 246, 0.08); border-left: 4px solid var(--primary); padding: 12px; border-radius: 4px; margin-bottom: 20px;">
+                    <strong>¿Qué puedes hacer con el Modo Edición?</strong>
+                    <ul style="margin: 8px 0 0 16px; padding: 0;">
+                        <li><strong>Personalizar Tablas:</strong> Crear nuevas tablas de datos o modificar las existentes de forma visual.</li>
+                        <li><strong>Modificar Columnas:</strong> Agregar, renombrar o eliminar campos (de tipo texto, números, fechas o listas).</li>
+                        <li><strong>Gestión de Permisos:</strong> Controlar lo que otros roles (como empleados o cajeros) pueden ver o editar.</li>
+                    </ul>
+                </div>
+                <p><strong>¿Cómo activarlo?</strong> En la parte inferior del menú lateral izquierdo, encontrarás un interruptor llamado <strong>"Modo Edición"</strong>. Actívalo en cualquier momento para personalizar tu base de datos sobre la marcha.</p>
+            </div>
+            <div class="modal-footer" style="padding: 16px 24px 24px 24px; border-top: 1px solid var(--border-glass);">
+                <button type="button" class="btn btn-primary" onclick="closeEditorIntroModal()" style="padding: 10px 24px;">¡Entendido!</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         function toggleEditMode() {
             const isEdit = document.getElementById('edit-mode-toggle').checked;
@@ -412,11 +445,24 @@
                 localStorage.setItem('editMode', 'false');
             }
         }
+
+        function closeEditorIntroModal() {
+            document.getElementById('editor-intro-modal').classList.remove('active');
+            localStorage.setItem('showEditorIntro', 'false');
+        }
         
         document.addEventListener('DOMContentLoaded', () => {
             const toggle = document.getElementById('edit-mode-toggle');
             if (toggle && localStorage.getItem('editMode') === 'true') {
                 toggle.checked = true;
+            }
+
+            // Verificar si debemos mostrar el modal introductorio del editor
+            if (localStorage.getItem('showEditorIntro') === 'true') {
+                const modal = document.getElementById('editor-intro-modal');
+                if (modal) {
+                    modal.classList.add('active');
+                }
             }
         });
     </script>

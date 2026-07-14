@@ -1242,7 +1242,102 @@ def setup_business_template(db: Session, business_id: int, template: str):
                 ]
             }
         ]
-        
+    elif template == "pharmacy":
+        tables_to_create = [
+            {
+                "name": "Inventario",
+                "description": "Gestión de medicamentos",
+                "fields": [
+                    {"name": "Nombre", "type": "text"},
+                    {"name": "Laboratorio", "type": "text"},
+                    {"name": "COD", "type": "text"},
+                    {"name": "Principio Activo", "type": "text"},
+                    {"name": "Precio", "type": "number_decimal"},
+                    {"name": "Cantidad", "type": "number_int"}
+                ]
+            }
+        ]
+    elif template == "vet":
+        tables_to_create = [
+            {
+                "name": "Pacientes",
+                "description": "Registro de mascotas",
+                "fields": [
+                    {"name": "Nombre Mascota", "type": "text"},
+                    {"name": "Especie", "type": "select", "options": "Perro, Gato, Ave, Otro"},
+                    {"name": "Raza", "type": "text"},
+                    {"name": "ID", "type": "text"},
+                    {"name": "Propietario", "type": "text"},
+                    {"name": "Última Cita", "type": "date"}
+                ]
+            }
+        ]
+    elif template == "hardware":
+        tables_to_create = [
+            {
+                "name": "Inventario",
+                "description": "Gestión de herramientas y materiales",
+                "fields": [
+                    {"name": "Producto", "type": "text"},
+                    {"name": "Categoría", "type": "select", "options": "Herramientas, Materiales, Plomería, Eléctrico, Pintura, Otros"},
+                    {"name": "COD", "type": "text"},
+                    {"name": "Marca", "type": "text"},
+                    {"name": "Precio", "type": "number_decimal"},
+                    {"name": "Stock", "type": "number_int"}
+                ]
+            }
+        ]
+    elif template == "salon":
+        tables_to_create = [
+            {
+                "name": "Servicios",
+                "description": "Catálogo de servicios del salón",
+                "fields": [
+                    {"name": "Servicio", "type": "text"},
+                    {"name": "Categoría", "type": "select", "options": "Cabello, Uñas, Maquillaje, Spa, Otros"},
+                    {"name": "Costo", "type": "number_decimal"},
+                    {"name": "Duración (min)", "type": "number_int"}
+                ]
+            }
+        ]
+    elif template == "mechanic":
+        tables_to_create = [
+            {
+                "name": "Servicios",
+                "description": "Registro de trabajos mecánicos",
+                "fields": [
+                    {"name": "Servicio", "type": "text"},
+                    {"name": "Categoría", "type": "select", "options": "Mantenimiento, Reparación, Revisión, Otros"},
+                    {"name": "Costo", "type": "number_decimal"}
+                ]
+            },
+            {
+                "name": "Repuestos",
+                "description": "Inventario de repuestos",
+                "fields": [
+                    {"name": "Repuesto", "type": "text"},
+                    {"name": "COD", "type": "text"},
+                    {"name": "Marca", "type": "text"},
+                    {"name": "Costo Unitario", "type": "number_decimal"},
+                    {"name": "Cantidad", "type": "number_int"}
+                ]
+            }
+        ]
+    elif template == "blank":
+        tables_to_create = [
+            {
+                "name": "Inventario",
+                "description": "Gestión de existencias",
+                "fields": [
+                    {"name": "Nombre", "type": "text"},
+                    {"name": "Marca", "type": "text"},
+                    {"name": "COD", "type": "text"},
+                    {"name": "Unidad de Venta", "type": "text"},
+                    {"name": "Precio por Unidad", "type": "number_decimal"},
+                    {"name": "Cantidad", "type": "number_int"}
+                ]
+            }
+        ]
     for t_info in tables_to_create:
         existing = db.query(models.AppTable).filter_by(business_id=business_id, name=t_info["name"]).first()
         if not existing:

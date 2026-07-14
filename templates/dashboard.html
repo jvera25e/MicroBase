@@ -12,42 +12,19 @@
             <p class="text-muted">Aquí tienes un resumen rápido y plantillas para empezar.</p>
         </header>
 
-        <div class="dashboard-grid">
-            <div class="glass-panel stat-card">
-                <div class="stat-header" style="background-color: var(--primary);">
-                    <i data-lucide="package"></i> Gestión de Inventario
-                </div>
-                <div class="stat-body">
-                    Revisa existencias, COD y costos.
-                </div>
-            </div>
-            <div class="glass-panel stat-card">
-                <div class="stat-header" style="background-color: var(--success);">
-                    <i data-lucide="users"></i> Gestión de Clientes
-                </div>
-                <div class="stat-body">
-                    Directorio y tracking de clientes.
-                </div>
-            </div>
-            <div class="glass-panel stat-card">
-                <div class="stat-header" style="background-color: var(--danger);">
-                    <i data-lucide="briefcase"></i> Empleados
-                </div>
-                <div class="stat-body">
-                    Nómina y personal activo.
-                </div>
-            </div>
-        </div>
-
-        <h3 style="margin-top: 32px; margin-bottom: 16px; font-weight: 500;">Puedes elegir entre plantillas rápidas (Configuración Sugerida)</h3>
+        <h3 style="margin-top: 16px; margin-bottom: 16px; font-weight: 500;">Puedes elegir entre plantillas rápidas (Configuración Sugerida)</h3>
         <div class="template-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+            <div class="glass-panel template-card" onclick="showTemplateModal('blank')" style="cursor: pointer; transition: transform 0.2s; background: rgba(255,255,255,0.05); border: 1px dashed var(--border-glass);">
+                <div class="template-icon" style="color: var(--text-muted);"><i data-lucide="file-plus"></i></div>
+                <h4>Empezar desde 0 sin plantilla</h4>
+            </div>
             <div class="glass-panel template-card" onclick="showTemplateModal('restaurant')" style="cursor: pointer; transition: transform 0.2s;">
                 <div class="template-icon" style="color: var(--warning);"><i data-lucide="utensils"></i></div>
                 <h4>Restaurante</h4>
             </div>
             <div class="glass-panel template-card" onclick="showTemplateModal('store')" style="cursor: pointer; transition: transform 0.2s;">
                 <div class="template-icon" style="color: var(--success);"><i data-lucide="store"></i></div>
-                <h4>Tienda</h4>
+                <h4>Tienda / Minimarket</h4>
             </div>
             <div class="glass-panel template-card" onclick="showTemplateModal('gym')" style="cursor: pointer; transition: transform 0.2s;">
                 <div class="template-icon" style="color: var(--primary);"><i data-lucide="dumbbell"></i></div>
@@ -56,6 +33,26 @@
             <div class="glass-panel template-card" onclick="showTemplateModal('liquor')" style="cursor: pointer; transition: transform 0.2s;">
                 <div class="template-icon" style="color: var(--danger);"><i data-lucide="wine"></i></div>
                 <h4>Licorería</h4>
+            </div>
+            <div class="glass-panel template-card" onclick="showTemplateModal('pharmacy')" style="cursor: pointer; transition: transform 0.2s;">
+                <div class="template-icon" style="color: #10b981;"><i data-lucide="cross"></i></div>
+                <h4>Farmacia</h4>
+            </div>
+            <div class="glass-panel template-card" onclick="showTemplateModal('vet')" style="cursor: pointer; transition: transform 0.2s;">
+                <div class="template-icon" style="color: #f59e0b;"><i data-lucide="cat"></i></div>
+                <h4>Veterinaria</h4>
+            </div>
+            <div class="glass-panel template-card" onclick="showTemplateModal('hardware')" style="cursor: pointer; transition: transform 0.2s;">
+                <div class="template-icon" style="color: #64748b;"><i data-lucide="hammer"></i></div>
+                <h4>Ferretería</h4>
+            </div>
+            <div class="glass-panel template-card" onclick="showTemplateModal('salon')" style="cursor: pointer; transition: transform 0.2s;">
+                <div class="template-icon" style="color: #ec4899;"><i data-lucide="scissors"></i></div>
+                <h4>Salón de Belleza</h4>
+            </div>
+            <div class="glass-panel template-card" onclick="showTemplateModal('mechanic')" style="cursor: pointer; transition: transform 0.2s;">
+                <div class="template-icon" style="color: #3b82f6;"><i data-lucide="wrench"></i></div>
+                <h4>Taller Mecánico</h4>
             </div>
         </div>
 
