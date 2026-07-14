@@ -124,7 +124,7 @@
                 <thead>
                     <tr>
                         <th style="width: 80px;">Réf (ID)</th>
-                        <th>Operador / COD</th>
+                        <th style="width: 150px;">Operador / COD</th>
                         <th>Detalle de la Operación (Facturación)</th>
                         <th style="text-align: right;">Fecha y Hora</th>
                         <th style="text-align: center; width: 160px;">Acción</th>
@@ -145,8 +145,8 @@
                         <td style="color: var(--text-muted); font-family: monospace;">TKT-{{ a.id }}</td>
                         <td>
                             <span class="badge"
-                                style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 4px 10px; border-radius: 20px;">
-                                <i data-lucide="user" style="width: 12px; height: 12px; margin-right: 4px;"></i>
+                                style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 4px 10px; border-radius: 20px; white-space: nowrap; display: inline-flex; align-items: center; gap: 4px;">
+                                <i data-lucide="user" style="width: 12px; height: 12px; margin-right: 0;"></i>
                                 {{ a.employee_code or 'Desconocido' }}
                             </span>
                         </td>
