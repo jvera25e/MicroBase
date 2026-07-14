@@ -1641,6 +1641,14 @@ function showConfirmPass() {
 
     document.getElementById('reg-step-2').style.display = 'none';
     document.getElementById('reg-step-3').style.display = 'block';
+
+    // Activar animación de temblor y negrita en la etiqueta
+    const label = document.getElementById('reg-confirm-label');
+    if (label) {
+        label.classList.remove('highlight-shake');
+        void label.offsetWidth; // Forzar reflujo para reiniciar la animación
+        label.classList.add('highlight-shake');
+    }
 }
 
 function backToRegStep(step) {
