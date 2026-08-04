@@ -8,33 +8,38 @@ MicroBase es una plataforma SaaS (Software as a Service) modular y dinámica, di
 
 ## 🌟 Características Principales
 
-*   **Creador de Recursos Dinámicos (No-Code):** Permite a los administradores crear sus propias tablas y columnas personalizadas (ej. Inventario, Clientes, Proveedores, Horarios) sin escribir código, estructurando datos operativos en minutos.
-    *   **Gestión Visual de Columnas (Drag & Drop):** Interfaz para reorganizar, crear, editar y definir tipos de datos de las columnas en tiempo real.
-    *   **Modo Edición vs Modo Visual:** Switch de protección de interfaz que bloquea la modificación accidental de las bases de datos en producción.
-*   **Módulo POS (Point of Sale) Inteligente**: 
-    *   **Identificación y Búsqueda Avanzada**: Búsqueda flexible de clientes por Nombre o por Cédula/RUC.
-    *   **Auto-llenado Cruzado**: Autocompleta automáticamente la cédula cuando se selecciona un nombre y viceversa.
-    *   **Enforzamiento Físico de Dígitos**: Control estricto a nivel de teclado que restringe la entrada a exactamente 10 dígitos (Cédula) o 13 dígitos (RUC).
-    *   **Consumidor Final Fast-Checkout**: Checkbox integrado que bloquea y autocompleta instantáneamente la venta con "Consumidor Final" y el RUC genérico `9999999999`.
-*   **Facturación y Tickets Térmicos**: Generación automática de tickets en formato de rollo térmico (58mm) al procesar movimientos y facturas, con opciones de exportación de información en formatos comunes como CSV y PDF.
-*   **Diseño de Alta Fidelidad (Glassmorphism UI)**: Interfaz fluida, moderna y responsiva que se adapta perfectamente a dispositivos móviles y escritorio, incorporando un sistema de múltiples temas (Dark/Light Mode).
-*   **Seguridad y Acceso Basado en Roles (RBAC)**: Blindaje de seguridad estricto con jerarquías estándar mediante bloqueo de Backend y Frontend:
-    *   **Admin/Dueño:** Acceso absoluto a todas las tablas, nómina, finanzas y configuración.
-    *   **Gerente:** Control operativo del negocio y gestión de compras y ventas.
-    *   **Bodeguero:** Control logístico enfocado en ingresos de stock (Compras).
-    *   **Cajero:** Control focalizado en salida de mercancía e ingresos de caja (Ventas). Oculta la información de personal para evitar fraudes.
-*   **Auditoría Extendida**: 
-    *   Historial Fiscal centralizado con registro imborrable del detalle de cada transacción (Operador, total facturado y cliente).
-    *   Cierre de filas (`readOnly`) después de salvadas para prevenir sobreescritura accidental.
-*   **Dashboard Analítico Integrado**: Implementación de gráficas interactivas en tiempo real (Chart.js) para visualizar el rendimiento financiero y facilitar la toma de decisiones estratégicas basadas en evidencia.
-*   **Soporte Multitenancy (Multi-empresa / Multi-sucursal)**: Arquitectura robusta que permite la gestión de múltiples sucursales u organizaciones independientes, garantizando el aislamiento seguro de la información, tablas dinámicas y usuarios.
+*   **Creador de Recursos Dinámicos (No-Code) y Plantillas:** Permite a los administradores crear sus propias tablas y columnas personalizadas (ej. Inventario, Clientes, Proveedores) sin escribir código.
+    *   **Gestión Visual de Columnas (Drag & Drop):** Interfaz para reorganizar, crear, editar y definir tipos de datos, con preservación del orden (`order_index`).
+    *   **Generación Automática de IDs:** Inyección automatizada de identificadores (UUIDs) y códigos (`COD`) para registros clave.
+    *   **Sistema de Plantillas por Industria:** Inicialización de módulos pre-configurados para Restaurantes, Tiendas, Gimnasios, Farmacias, Ferreterías, Talleres y Salones de Belleza.
+    *   **Modo Edición vs Modo Visual:** Switch de protección de interfaz que bloquea la modificación accidental en producción.
+*   **Módulo POS (Point of Sale) e Inteligencia de UI**: 
+    *   **Autocompletado Inteligente (Sugerencias API):** Búsqueda predictiva dinámica para clientes, proveedores y tickets (`/api/clients/suggest`).
+    *   **Auto-llenado Cruzado y Enforzamiento:** Autocompleta automáticamente la cédula cuando se selecciona un nombre. Restringe el hardware para forzar 10 dígitos (Cédula) o 13 dígitos (RUC).
+    *   **Consumidor Final Fast-Checkout**: Checkbox integrado que bloquea y autocompleta instantáneamente la venta con "Consumidor Final".
+*   **Gestión Avanzada de Empleados (RRHH):**
+    *   **Flujo de Altas y Bajas:** Los empleados se unen mediante Códigos de Empresa (estado `pending`) requiriendo aprobación.
+    *   **Despidos y Recontrataciones:** Los administradores pueden suspender (`fired`) o recontratar (`rehire`) al personal.
+*   **Sistema de Notificaciones por Correo (SMTP):** Envío automático de emails (aprobaciones, rechazos, creación de negocios), con seguimiento de errores de red y reintentos manuales.
+*   **Facturación y Auditoría Extendida**: 
+    *   **Tickets Térmicos y Exportaciones:** Generación de rollo térmico (58mm), CSV y PDF.
+    *   **Sistema de Modificación y Anulación:** Flujos de aprobación para alterar transacciones (`pending_change`), anulación directa y **recálculo matemático automático del stock/inventario** al procesar devoluciones.
+    *   **Cierre de Filas (`readOnly`):** Previene sobreescritura accidental del historial fiscal.
+*   **Dashboard Analítico y KPIs (Tiempo Real)**: 
+    *   **Cálculo de Ganancia Neta:** Matemática precisa de (Ventas - Compras).
+    *   **Alertas y Ranking:** Alertas inteligentes de inventario bajo (Stock <= 3) y tableros interactivos del Top 3 de productos más y menos vendidos.
+    *   **Filtros Cruzados:** Gráficas Chart.js adaptables por rango de fechas personalizadas y aislamiento de productos específicos.
+*   **Herramientas CLI y Mantenimiento:** Set de scripts backend para exportar bases de datos completas (`backup_script.py`), restaurar backups, inyectar datos falsos para testing y un borrado seguro en cascada de Tenants completos (`delete_business.py`).
+*   **Diseño de Alta Fidelidad (Glassmorphism UI)**: Interfaz fluida, moderna y responsiva (Dark/Light Mode).
+*   **Seguridad y Multitenancy (RBAC)**: Aislamiento jerárquico estricto (Admin, Gerente, Cajero). Las compras / inyecciones de stock solo están permitidas a perfiles administrativos.
 
-## 🛠️ Stack Tecnológico
+## 🛠️ Stack Tecnológico y Arquitectura Cloud
 
-El desarrollo de esta propuesta tecnológica se basa en el siguiente ecosistema:
+El desarrollo y despliegue de esta propuesta tecnológica se basa en el siguiente ecosistema moderno y serverless:
 
 *   **Backend:** Python con [FastAPI](https://fastapi.tiangolo.com/) garantizando un rendimiento ágil y escalable.
-*   **Base de Datos:** PostgreSQL (Nativo) con SQLAlchemy y diseño de ORM para el manejo estructurado de datos.
+*   **Base de Datos (Cloud):** PostgreSQL Serverless alojado en **[Neon](https://neon.tech/)**, integrado con SQLAlchemy y diseño de ORM para el manejo estructurado y seguro de datos en la nube.
+*   **Despliegue / Hosting:** La plataforma está desplegada en **[Vercel](https://vercel.com/)**, aprovechando su infraestructura Serverless Edge para una entrega rápida, integración continua (CI/CD) y alta disponibilidad sin necesidad de gestionar servidores tradicionales.
 *   **Renderizado de Vistas:** Jinja2.
 *   **Frontend:** HTML5, CSS3 Vanilla y JavaScript Vanilla, aplicando principios rigurosos de usabilidad y diseño (Glassmorphism) para facilitar la adopción por parte del usuario final.
 
@@ -66,5 +71,5 @@ Navega a `http://127.0.0.1:8000/` para comenzar.
 *   **Gestión Avanzada:** Integración con más herramientas de análisis en tiempo real orientadas al ecosistema Low-Code y No-Code.
 
 ---
-*Desarrollado como Proyecto de Titulación - Ingeniería en Sistemas de la Información*
+*Desarrollado como Proyecto de Titulación - Ingeniería en Sistemas de la Información UTM*
 **Autores:** Castillo Mina Williams Johao & Molina Balseca Geanella Valentina (2026)
