@@ -31,6 +31,11 @@ MicroBase es una plataforma SaaS (Software as a Service) modular y dinámica, di
     *   **Filtros Cruzados:** Gráficas Chart.js adaptables por rango de fechas personalizadas y aislamiento de productos específicos.
 *   **Herramientas CLI y Mantenimiento:** Set de scripts backend para exportar bases de datos completas (`backup_script.py`), restaurar backups, inyectar datos falsos para testing y un borrado seguro en cascada de Tenants completos (`delete_business.py`).
 *   **Diseño de Alta Fidelidad (Glassmorphism UI)**: Interfaz fluida, moderna y responsiva (Dark/Light Mode).
+*   **Micro-interacciones y UX Avanzada (Protección de Datos):**
+    *   **Gamificación de Llenado:** Los formularios de creación revelan los campos uno por uno (llenado progresivo) para no abrumar al usuario.
+    *   **Sugerencias Inteligentes (Builder):** Al nombrar una columna como "Rol" o "Cargo", el sistema autocompleta sugerencias de opciones (Ej: Admin, Empleado).
+    *   **Auto-Scroll en Drag & Drop:** Al arrastrar elementos hacia los bordes de la pantalla, el contenedor se desplaza automáticamente.
+    *   **Interceptación de Navegación (`appIsDirty`):** Evita la pérdida accidental de datos bloqueando la salida de la página si existen cambios sin guardar.
 *   **Seguridad y Acceso Basado en Roles (RBAC):** Aislamiento jerárquico estricto (Admin, Gerente, Cajero). Las compras / inyecciones de stock solo están permitidas a perfiles administrativos.
 *   **Soporte Multitenancy (Múltiples Negocios):** Arquitectura robusta que soporta múltiples sucursales u organizaciones independientes operando en simultáneo, garantizando un aislamiento total y seguro de su información (tablas, inventario, auditorías y usuarios).
 
