@@ -1321,22 +1321,25 @@ async function processMovement() {
         return showToast("La cédula/RUC tiene una longitud incorrecta.", "warning");
     }
 
+    let computedTotal = 0;
     let payload = Object.values(cartItems).map(i => {
         let precioVal = i.record.data['Precio por Unidad'] || i.record.data['Precio'] || i.record.data['precio'] || 0;
         let precio = parseFloat(precioVal) || 0;
+        let subFila = precio * i.qty;
+        computedTotal += subFila;
         return {
             record_id: i.record.id,
             quantity_change: i.qty,
             name: i.record.data.Nombre || i.record.data.COD || 'Item',
             price: precio,
-            subtotal: precio * i.qty
+            subtotal: subFila
         };
     });
     if (payload.length === 0) return showToast("Por favor, agrega al menos un producto al carrito.", "warning");
 
-    let totalText = document.getElementById('cart-total').textContent.replace('$', '');
-    let subtotalText = document.getElementById('cart-subtotal').textContent.replace('$', '');
-    let ivaText = document.getElementById('cart-iva').textContent.replace('$', '');
+    let totalVal = computedTotal;
+    let subtotalVal = totalVal / 1.15;
+    let ivaVal = totalVal - subtotalVal;
 
     try {
         const res = await fetch('/inventory/movement', {
@@ -1346,9 +1349,9 @@ async function processMovement() {
                 type: type,
                 client_name: clientName,
                 client_cedula: clientCedula,
-                subtotal: parseFloat(subtotalText),
-                iva: parseFloat(ivaText),
-                total: parseFloat(totalText),
+                subtotal: subtotalVal,
+                iva: ivaVal,
+                total: totalVal,
                 items: payload
             })
         });

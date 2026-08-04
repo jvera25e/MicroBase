@@ -225,6 +225,7 @@ async def audits_view(request: Request, q: str = None, tab: str = "active", limi
         
         if ticket_id is not None:
             filters.append(models.AppAudit.id == ticket_id)
+            filters.append(cast(models.AppAudit.details, String).ilike(f"%{ticket_id}%"))
             
         query = query.filter(or_(*filters))
         
@@ -575,13 +576,35 @@ def api_add_record(table_id: int, record: schemas.AppRecordCreate, request: Requ
     )
     action_str = f"Creación | {table_name}: {record_identifier}"
     
+    t_count = db.query(models.AppAudit).filter(models.AppAudit.business_id == user.business_id).count()
+    details_dict = {"new_data": data_copy, "ticket_number": t_count + 1}
+    
+    if db_table and "inventario" in db_table.name.lower():
+        try:
+            new_qty = float(data_copy.get("Cantidad", 0)) if str(data_copy.get("Cantidad", 0)).strip() != "" else 0.0
+        except (ValueError, TypeError):
+            new_qty = 0.0
+        if new_qty > 0:
+            try:
+                precio_val = data_copy.get("Precio por Unidad") or data_copy.get("Precio") or data_copy.get("precio") or 0.0
+                price = float(precio_val) if str(precio_val).strip() != "" else 0.0
+            except (ValueError, TypeError):
+                price = 0.0
+            total_cost = new_qty * price
+            action_str = f"Compra | Inventario Inicial | Total: ${total_cost:.2f}"
+            details_dict.update({
+                "type": "Compra",
+                "total": total_cost,
+                "items": [{"name": data_copy.get("Nombre", "Item"), "quantity_change": new_qty, "price": price, "subtotal": total_cost}]
+            })
+
     audit = models.AppAudit(
         business_id=user.business_id,
         table_id=table_id,
         record_id=db_record.id,
         employee_code=user.employee_code,
         action=action_str,
-        details={"new_data": data_copy}
+        details=details_dict
     )
     db.add(audit)
     db.commit()
@@ -606,6 +629,7 @@ def api_delete_record(record_id: int, request: Request, db: Session = Depends(da
             f"Registro #{db_record.id}"
         )
         action_str = f"Eliminación | {table_name}: {record_identifier}"
+        t_count = db.query(models.AppAudit).filter(models.AppAudit.business_id == user.business_id).count()
         
         audit = models.AppAudit(
             business_id=user.business_id,
@@ -613,7 +637,7 @@ def api_delete_record(record_id: int, request: Request, db: Session = Depends(da
             record_id=None,  # record_id a None para evitar eliminación por cascada (CASCADE) en base de datos al borrar el registro
             employee_code=user.employee_code,
             action=action_str,
-            details={"deleted_data": record_data}
+            details={"deleted_data": record_data, "ticket_number": t_count + 1}
         )
         db.add(audit)
         
@@ -659,13 +683,40 @@ def api_update_record(record_id: int, record: schemas.AppRecordCreate, request: 
     changes_str = ", ".join(changes) if changes else "sin cambios"
     action_str = f"Edición | {table_name}: {record_identifier} | Cambios: {changes_str}"
     
+    t_count = db.query(models.AppAudit).filter(models.AppAudit.business_id == user.business_id).count()
+    details_dict = {"old_data": old_data, "new_data": new_data, "changes": changes, "ticket_number": t_count + 1}
+    
+    if db_table and "inventario" in db_table.name.lower():
+        try:
+            old_qty = float(old_data.get("Cantidad", 0)) if str(old_data.get("Cantidad", 0)).strip() != "" else 0.0
+        except (ValueError, TypeError):
+            old_qty = 0.0
+        try:
+            new_qty = float(new_data.get("Cantidad", 0)) if str(new_data.get("Cantidad", 0)).strip() != "" else 0.0
+        except (ValueError, TypeError):
+            new_qty = 0.0
+        if new_qty > old_qty:
+            added_qty = new_qty - old_qty
+            try:
+                precio_val = new_data.get("Precio por Unidad") or new_data.get("Precio") or new_data.get("precio") or 0.0
+                price = float(precio_val) if str(precio_val).strip() != "" else 0.0
+            except (ValueError, TypeError):
+                price = 0.0
+            total_cost = added_qty * price
+            action_str = f"Compra | Ajuste Manual | Total: ${total_cost:.2f}"
+            details_dict.update({
+                "type": "Compra",
+                "total": total_cost,
+                "items": [{"name": new_data.get("Nombre", "Item"), "quantity_change": added_qty, "price": price, "subtotal": total_cost}]
+            })
+            
     audit = models.AppAudit(
         business_id=user.business_id,
         table_id=db_record.table_id,
         record_id=db_record.id,
         employee_code=user.employee_code,
         action=action_str,
-        details={"old_data": old_data, "new_data": new_data, "changes": changes}
+        details=details_dict
     )
     db.add(audit)
     
@@ -703,13 +754,18 @@ def api_inventory_movement(payload: schemas.MovementPayload, request: Request, d
     
     label_sujeto = "Proveedor" if payload.type == "Compra" else "Cliente"
     cedula_text = f" | Cédula/RUC: {payload.client_cedula}" if getattr(payload, "client_cedula", None) else ""
+    
+    t_count = db.query(models.AppAudit).filter(models.AppAudit.business_id == user.business_id).count()
+    details_dict = payload.model_dump()
+    details_dict["ticket_number"] = t_count + 1
+    
     audit = models.AppAudit(
         business_id=user.business_id,
         table_id=first_item.table_id if first_item else None,
         record_id=None,
         employee_code=user.employee_code,
         action=f"{payload.type} | {label_sujeto}: {payload.client_name or 'Consumidor Final'}{cedula_text} | Total: ${payload.total:.2f}",
-        details=payload.model_dump()
+        details=details_dict
     )
     db.add(audit)
         
@@ -790,11 +846,15 @@ def api_audits_suggest(q: str = "", db: Session = Depends(database.get_db)):
             pass
             
     if ticket_id is not None:
-        tickets = db.query(models.AppAudit.id).filter(
-            cast(models.AppAudit.id, String).ilike(f"%{ticket_id}%")
+        tickets = db.query(models.AppAudit).filter(
+            or_(
+                cast(models.AppAudit.id, String).ilike(f"%{ticket_id}%"),
+                cast(models.AppAudit.details, String).ilike(f"%{ticket_id}%")
+            )
         ).limit(5).all()
         for t in tickets:
-            tkt_str = f"TKT-{t[0]}"
+            num = t.details.get("ticket_number") if t.details and "ticket_number" in t.details else t.id
+            tkt_str = f"TKT-{num}"
             if tkt_str not in suggestions:
                 suggestions.append(tkt_str)
                 

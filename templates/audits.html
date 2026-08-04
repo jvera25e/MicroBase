@@ -142,7 +142,7 @@
                     {% else %}
                     {% for a in audits %}
                     <tr>
-                        <td style="color: var(--text-muted); font-family: monospace;">TKT-{{ a.id }}</td>
+                        <td style="color: var(--text-muted); font-family: monospace;">TKT-{{ a.details.get('ticket_number', a.id) if a.details else a.id }}</td>
                         <td>
                             <span class="badge"
                                 style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 4px 10px; border-radius: 20px; white-space: nowrap; display: inline-flex; align-items: center; gap: 4px;">
