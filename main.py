@@ -188,6 +188,8 @@ async def audits_view(request: Request, q: str = None, tab: str = "active", limi
     user = get_current_user(request, db)
     if not user:
         return RedirectResponse(url="/login", status_code=status.HTTP_302_FOUND)
+    if user.role != 'admin':
+        return RedirectResponse(url="/dashboard", status_code=status.HTTP_302_FOUND)
     
     query = db.query(models.AppAudit).filter(models.AppAudit.business_id == user.business_id)
     
@@ -809,7 +811,11 @@ def api_suppliers_suggest(request: Request, db: Session = Depends(database.get_d
     return names
 
 @app.get("/api/audits/suggest", tags=["audit"])
-def api_audits_suggest(q: str = "", db: Session = Depends(database.get_db)):
+def api_audits_suggest(request: Request, q: str = "", db: Session = Depends(database.get_db)):
+    user = get_current_user(request, db)
+    if not user or user.role != "admin":
+        raise HTTPException(status_code=403, detail="No autorizado")
+
     if not q or len(q.strip()) < 1:
         return []
     q_clean = q.strip()
@@ -818,6 +824,7 @@ def api_audits_suggest(q: str = "", db: Session = Depends(database.get_db)):
     
     # 1. Operators matching q
     operators = db.query(models.AppAudit.employee_code).filter(
+        models.AppAudit.business_id == user.business_id,
         models.AppAudit.employee_code.ilike(f"%{q_clean}%")
     ).distinct().limit(5).all()
     for op in operators:
@@ -826,6 +833,7 @@ def api_audits_suggest(q: str = "", db: Session = Depends(database.get_db)):
             
     # 2. Actions matching q
     actions = db.query(models.AppAudit.action).filter(
+        models.AppAudit.business_id == user.business_id,
         models.AppAudit.action.ilike(f"%{q_clean}%")
     ).distinct().limit(5).all()
     for act in actions:
@@ -847,6 +855,7 @@ def api_audits_suggest(q: str = "", db: Session = Depends(database.get_db)):
             
     if ticket_id is not None:
         tickets = db.query(models.AppAudit).filter(
+            models.AppAudit.business_id == user.business_id,
             or_(
                 cast(models.AppAudit.id, String).ilike(f"%{ticket_id}%"),
                 cast(models.AppAudit.details, String).ilike(f"%{ticket_id}%")
@@ -864,8 +873,8 @@ def api_audits_suggest(q: str = "", db: Session = Depends(database.get_db)):
 @app.get("/api/audits", tags=["audit"])
 def api_get_audits(request: Request, db: Session = Depends(database.get_db)):
     user = get_current_user(request, db)
-    if not user:
-        raise HTTPException(status_code=401, detail="No autorizado")
+    if not user or user.role != "admin":
+        raise HTTPException(status_code=403, detail="No autorizado")
     
     audits = db.query(models.AppAudit).filter(models.AppAudit.business_id == user.business_id).order_by(models.AppAudit.id.desc()).limit(100).all()
     result = []
@@ -1015,7 +1024,7 @@ def api_request_modification(audit_id: int, payload: schemas.RequestModification
 @app.post("/api/audits/{audit_id}/resolve-modification", tags=["audit"])
 def api_resolve_modification(audit_id: int, payload: schemas.ResolveModificationPayload, request: Request, db: Session = Depends(database.get_db)):
     user = get_current_user(request, db)
-    if not user or user.role not in ["admin", "manager"]:
+    if not user or user.role != "admin":
         raise HTTPException(status_code=403, detail="No autorizado")
         
     audit = db.query(models.AppAudit).filter(models.AppAudit.id == audit_id, models.AppAudit.business_id == user.business_id).first()
@@ -1106,7 +1115,7 @@ def api_resolve_modification(audit_id: int, payload: schemas.ResolveModification
 @app.post("/api/audits/{audit_id}/direct-annul", tags=["audit"])
 def api_direct_annul(audit_id: int, payload: schemas.DirectAnnulPayload, request: Request, db: Session = Depends(database.get_db)):
     user = get_current_user(request, db)
-    if not user or user.role not in ["admin", "manager"]:
+    if not user or user.role != "admin":
         raise HTTPException(status_code=403, detail="No autorizado")
         
     audit = db.query(models.AppAudit).filter(models.AppAudit.id == audit_id, models.AppAudit.business_id == user.business_id).first()

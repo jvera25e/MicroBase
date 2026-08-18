@@ -75,12 +75,14 @@
                         </a>
                         {% endif %}
                     </li>
+                    {% if user.role == 'admin' %}
                     <li>
                         <a href="/audits-view"
                             class="nav-link {% if request.url.path == '/audits-view' %}active{% endif %}" title="Historial Fiscal">
                             <i data-lucide="clipboard-list"></i> <span class="table-name-text">Historial Fiscal</span>
                         </a>
                     </li>
+                    {% endif %}
                     {% if user.role in ['admin', 'manager'] %}
                     <li>
                         <a href="/settings" class="nav-link {% if request.url.path == '/settings' %}active{% endif %}" title="Configuración">
