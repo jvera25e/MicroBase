@@ -3,7 +3,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
-from sqlalchemy import cast, String, or_
+from sqlalchemy import cast, String, or_, text
 import database, models, schemas
 import uuid
 from sqlalchemy.orm.attributes import flag_modified
@@ -120,13 +120,25 @@ def init_db(db: Session, business_id: int):
 # Evento de inicio
 @app.on_event("startup")
 def on_startup():
-    pass
+    db = database.SessionLocal()
+    try:
+        db.execute(text("ALTER TABLE users ADD COLUMN is_superuser BOOLEAN DEFAULT FALSE"))
+        db.commit()
+    except Exception:
+        db.rollback()
+    finally:
+        db.close()
 
 def get_current_user(request: Request, db: Session):
     token = request.cookies.get("auth_token")
     if not token:
         return None
-    return db.query(models.User).filter(models.User.email == token).first()
+    user = db.query(models.User).filter(models.User.email == token).first()
+    if user and getattr(user, 'is_superuser', False):
+        active_role = request.cookies.get("active_role")
+        if active_role in ["admin", "manager", "empleado"]:
+            user.role = active_role
+    return user
 
 # --- Vistas Frontend ---
 @app.get("/", response_class=HTMLResponse, include_in_schema=False)
@@ -383,7 +395,25 @@ def api_login(payload: schemas.UserLogin, response: Response, db: Session = Depe
 @app.post("/auth/logout", tags=["auth"])
 def api_logout(response: Response):
     response.delete_cookie(key="auth_token")
+    response.delete_cookie(key="active_role")
     return {"ok": True}
+
+@app.post("/api/superuser/switch-role", tags=["auth"])
+async def switch_superuser_role(request: Request, response: Response, db: Session = Depends(database.get_db)):
+    token = request.cookies.get("auth_token")
+    if not token:
+        raise HTTPException(status_code=401, detail="No autenticado")
+    user = db.query(models.User).filter(models.User.email == token).first()
+    if not user or not getattr(user, 'is_superuser', False):
+        raise HTTPException(status_code=403, detail="Acceso denegado: Requiere permisos de Superusuario")
+    
+    data = await request.json()
+    new_role = data.get("role")
+    if new_role not in ["admin", "manager", "empleado"]:
+        raise HTTPException(status_code=400, detail="Rol no válido")
+    
+    response.set_cookie(key="active_role", value=new_role, httponly=False)
+    return {"ok": True, "active_role": new_role}
 
 
 @app.get("/tables", response_model=list[schemas.AppTable], tags=["tables"])

@@ -12,7 +12,7 @@
     <!-- Lucide Icons (local - para compatibilidad con Brave / sin internet) -->
     <script src="/static/js/lucide.min.js"></script>
     <!-- Custom Styles -->
-    <link rel="stylesheet" href="/static/css/style.css?v=1.1.2">
+    <link rel="stylesheet" href="/static/css/style.css?v=1.1.5">
 </head>
 
 <body class="dark-theme">
@@ -45,13 +45,39 @@
                 </button>
             </div>
             {% if user %}
-            <div style="padding: 6px 20px 10px; display: flex; align-items: center; gap: 7px;">
-                <div
-                    style="width: 7px; height: 7px; border-radius: 50%; background: var(--success); box-shadow: 0 0 6px var(--success); flex-shrink:0;">
+            <div class="user-sidebar-section {% if not user.is_superuser %}non-superuser{% endif %}" style="padding: 6px 14px 10px; display: flex; flex-direction: column; gap: 8px;">
+                <div class="user-details-row" style="display: flex; align-items: center; gap: 7px; overflow: hidden;">
+                    <div style="width: 7px; height: 7px; border-radius: 50%; background: var(--success); box-shadow: 0 0 6px var(--success); flex-shrink:0;"></div>
+                    <span class="user-details" style="font-size: 0.95rem; color: var(--text-muted); text-transform: capitalize; font-weight: 500; display: flex; align-items: center; gap: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                        {{ user.role }}
+                        {% if user.is_superuser %}
+                        <span style="font-size: 0.65rem; background: linear-gradient(135deg, #f39c12, #e67e22); color: #fff; padding: 2px 5px; border-radius: 4px; font-weight: 600; text-transform: uppercase;" title="Modo Superusuario Activo">👑 Super</span>
+                        {% endif %}
+                    </span>
                 </div>
-                <span class="user-details"
-                    style="font-size: 1rem; color: var(--text-muted); text-transform: capitalize; font-weight: 500;">{{
-                    user.role }}</span>
+
+                {% if user.is_superuser %}
+                <div class="superuser-switcher-card">
+                    <div class="superuser-switcher-header">
+                        <span class="superuser-switcher-header-text">PROBAR ROL (DEV)</span>
+                        <i data-lucide="crown" class="su-crown-icon" title="Modo Superusuario"></i>
+                    </div>
+                    <div class="superuser-role-selector">
+                        <button type="button" onclick="switchSuperuserRole('admin')" class="su-role-btn {% if user.role == 'admin' %}active{% endif %}" title="Ver como Administrador">
+                            <span class="su-btn-label-full">Admin</span>
+                            <span class="su-btn-label-short">A</span>
+                        </button>
+                        <button type="button" onclick="switchSuperuserRole('manager')" class="su-role-btn {% if user.role == 'manager' %}active{% endif %}" title="Ver como Manager">
+                            <span class="su-btn-label-full">Manager</span>
+                            <span class="su-btn-label-short">M</span>
+                        </button>
+                        <button type="button" onclick="switchSuperuserRole('empleado')" class="su-role-btn {% if user.role == 'empleado' %}active{% endif %}" title="Ver como Empleado">
+                            <span class="su-btn-label-full">Empleado</span>
+                            <span class="su-btn-label-short">E</span>
+                        </button>
+                    </div>
+                </div>
+                {% endif %}
             </div>
             {% endif %}
             <nav class="sidebar-nav" id="sidebar-nav">
@@ -467,6 +493,27 @@
                 }
             }
         });
+        async function switchSuperuserRole(newRole) {
+            try {
+                const res = await fetch('/api/superuser/switch-role', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ role: newRole })
+                });
+                if (res.ok) {
+                    window.location.reload();
+                } else {
+                    const data = await res.json();
+                    if (typeof showToast === 'function') {
+                        showToast(data.detail || 'Error al cambiar de rol', 'error');
+                    } else {
+                        alert(data.detail || 'Error al cambiar de rol');
+                    }
+                }
+            } catch (err) {
+                console.error('Error al cambiar rol de superusuario:', err);
+            }
+        }
     </script>
     <script src="/static/js/app.js?v=1.0.8"></script>
     <script>
