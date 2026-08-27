@@ -2,7 +2,8 @@ from fastapi import FastAPI, Depends, Request, HTTPException, Response, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
-from sqlalchemy.orm import Session
+from fastapi.middleware.gzip import GZipMiddleware
+from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import cast, String, or_, text
 import database, models, schemas
 import uuid
@@ -58,10 +59,32 @@ def send_status_email(to_email: str, name: str, status: str):
 
 app = FastAPI(title="MicroBase No-Code")
 
+# Middleware de compresión GZip (comprime respuestas > 1KB)
+app.add_middleware(GZipMiddleware, minimum_size=1000)
+
 # Create tables
 models.Base.metadata.create_all(bind=database.engine)
 
-app.mount("/static", StaticFiles(directory="static"), name="static")
+# Archivos estáticos con cabeceras de caché
+from starlette.staticfiles import StaticFiles as StarletteStaticFiles
+
+class CachedStaticFiles(StarletteStaticFiles):
+    async def __call__(self, scope, receive, send):
+        if scope["type"] == "http":
+            original_send = send
+            async def cached_send(message):
+                if message.get("type") == "http.response.start":
+                    headers = dict(message.get("headers", []))
+                    # Cache-Control: 1 día para estáticos
+                    new_headers = list(message.get("headers", []))
+                    new_headers.append((b"cache-control", b"public, max-age=86400"))
+                    message["headers"] = new_headers
+                await original_send(message)
+            await super().__call__(scope, receive, cached_send)
+        else:
+            await super().__call__(scope, receive, send)
+
+app.mount("/static", CachedStaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
 def init_db(db: Session, business_id: int):
@@ -133,7 +156,7 @@ def get_current_user(request: Request, db: Session):
     token = request.cookies.get("auth_token")
     if not token:
         return None
-    user = db.query(models.User).filter(models.User.email == token).first()
+    user = db.query(models.User).options(joinedload(models.User.business)).filter(models.User.email == token).first()
     if user and getattr(user, 'is_superuser', False):
         active_role = request.cookies.get("active_role")
         if active_role in ["admin", "manager", "empleado"]:

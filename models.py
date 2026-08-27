@@ -19,7 +19,7 @@ class User(Base):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)
-    business_id = Column(Integer, ForeignKey("businesses.id", ondelete="CASCADE"), nullable=True)
+    business_id = Column(Integer, ForeignKey("businesses.id", ondelete="CASCADE"), nullable=True, index=True)
     full_name = Column(String)
     email = Column(String, unique=True, index=True)
     hashed_password = Column(String)
@@ -27,7 +27,7 @@ class User(Base):
     role = Column(String, default="empleado") # admin, manager, empleado
     employee_code = Column(String, unique=True, index=True)
     cedula = Column(String, unique=True, index=True, nullable=True)
-    status = Column(String, default="pending") # active, pending
+    status = Column(String, default="pending", index=True) # active, pending
     email_error = Column(Boolean, default=False, server_default="false")
     is_superuser = Column(Boolean, default=False, server_default="false")
 
@@ -37,14 +37,14 @@ class AppAudit(Base):
     __tablename__ = "app_audits"
 
     id = Column(Integer, primary_key=True, index=True)
-    business_id = Column(Integer, ForeignKey("businesses.id", ondelete="CASCADE"), nullable=True)
-    table_id = Column(Integer, ForeignKey("app_tables.id", ondelete="CASCADE"), nullable=True)
-    record_id = Column(Integer, ForeignKey("app_records.id", ondelete="CASCADE"), nullable=True)
+    business_id = Column(Integer, ForeignKey("businesses.id", ondelete="CASCADE"), nullable=True, index=True)
+    table_id = Column(Integer, ForeignKey("app_tables.id", ondelete="CASCADE"), nullable=True, index=True)
+    record_id = Column(Integer, ForeignKey("app_records.id", ondelete="CASCADE"), nullable=True, index=True)
     employee_code = Column(String)
     action = Column(String)
     details = Column(JSON, nullable=True)
     timestamp = Column(DateTime, default=datetime.datetime.utcnow)
-    status = Column(String, default="active", server_default="active")
+    status = Column(String, default="active", server_default="active", index=True)
     modification_notes = Column(String, nullable=True)
     proposed_details = Column(JSON, nullable=True)
 
@@ -54,7 +54,7 @@ class AppTable(Base):
     __tablename__ = "app_tables"
 
     id = Column(Integer, primary_key=True, index=True)
-    business_id = Column(Integer, ForeignKey("businesses.id", ondelete="CASCADE"), nullable=True)
+    business_id = Column(Integer, ForeignKey("businesses.id", ondelete="CASCADE"), nullable=True, index=True)
     name = Column(String, index=True)
     description = Column(String, nullable=True)
 
@@ -66,7 +66,7 @@ class AppField(Base):
     __tablename__ = "app_fields"
 
     id = Column(Integer, primary_key=True, index=True)
-    table_id = Column(Integer, ForeignKey("app_tables.id", ondelete="CASCADE"))
+    table_id = Column(Integer, ForeignKey("app_tables.id", ondelete="CASCADE"), index=True)
     name = Column(String)  # ej. "Precio", "Cantidad"
     field_type = Column(String)  # ej. "text", "number", "select", "date"
     options = Column(String, nullable=True) # "A, B, C"
@@ -78,7 +78,7 @@ class AppRecord(Base):
     __tablename__ = "app_records"
 
     id = Column(Integer, primary_key=True, index=True)
-    table_id = Column(Integer, ForeignKey("app_tables.id", ondelete="CASCADE"))
+    table_id = Column(Integer, ForeignKey("app_tables.id", ondelete="CASCADE"), index=True)
     data = Column(JSON)
 
     table = relationship("AppTable", back_populates="records")
